@@ -1,0 +1,60 @@
+{
+  "policy": {
+    "_meta": {
+      "description": "HECATE application logs ILM policy: hot 7d → warm 23d → delete",
+      "version": "1.0.0"
+    },
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_age": "7d",
+            "max_primary_shard_size": "50gb",
+            "max_docs": 50000000
+          },
+          "set_priority": {
+            "priority": 100
+          },
+          "forcemerge": {
+            "max_num_segments": 1
+          }
+        }
+      },
+      "warm": {
+        "min_age": "7d",
+        "actions": {
+          "shrink": {
+            "number_of_shards": 1
+          },
+          "allocate": {
+            "number_of_replicas": 0,
+            "require": {
+              "data": "warm"
+            }
+          },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "cold": {
+        "min_age": "20d",
+        "actions": {
+          "freeze": {},
+          "set_priority": {
+            "priority": 0
+          }
+        }
+      },
+      "delete": {
+        "min_age": "30d",
+        "actions": {
+          "delete": {
+            "delete_searchable_snapshot": true
+          }
+        }
+      }
+    }
+  }
+}

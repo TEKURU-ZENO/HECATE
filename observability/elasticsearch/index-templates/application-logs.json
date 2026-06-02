@@ -1,0 +1,124 @@
+{
+  "index_patterns": ["application_logs-*"],
+  "_meta": {
+    "description": "HECATE application log index template",
+    "version": "1.0.0"
+  },
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "index.lifecycle.name": "hecate-logs-policy",
+      "index.lifecycle.rollover_alias": "application_logs",
+      "index.default_pipeline": "hecate-log-enrichment",
+      "index.codec": "best_compression",
+      "analysis": {
+        "normalizer": {
+          "lowercase_normalizer": {
+            "type": "custom",
+            "filter": ["lowercase"]
+          }
+        }
+      }
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "_source": { "enabled": true },
+      "properties": {
+        "@timestamp": {
+          "type": "date",
+          "format": "strict_date_optional_time||epoch_millis"
+        },
+        "level": {
+          "type": "keyword",
+          "normalizer": "lowercase_normalizer"
+        },
+        "message": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 }
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "keyword" },
+            "version": { "type": "keyword" },
+            "environment": { "type": "keyword" }
+          }
+        },
+        "agent": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "keyword" },
+            "type": { "type": "keyword" }
+          }
+        },
+        "trace": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "keyword" },
+            "span_id": { "type": "keyword" }
+          }
+        },
+        "kubernetes": {
+          "type": "object",
+          "properties": {
+            "namespace": { "type": "keyword" },
+            "pod": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "keyword" },
+                "uid": { "type": "keyword" }
+              }
+            },
+            "node": { "type": "keyword" },
+            "container": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "keyword" },
+                "image": { "type": "keyword" }
+              }
+            }
+          }
+        },
+        "event": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "keyword" },
+            "category": { "type": "keyword" },
+            "outcome": { "type": "keyword" },
+            "duration": { "type": "long" }
+          }
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "text" },
+            "type": { "type": "keyword" },
+            "stack_trace": { "type": "text", "index": false }
+          }
+        },
+        "incident": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "keyword" },
+            "severity": { "type": "keyword" },
+            "status": { "type": "keyword" }
+          }
+        },
+        "labels": {
+          "type": "object",
+          "dynamic": true
+        },
+        "host": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "keyword" },
+            "ip": { "type": "ip" }
+          }
+        }
+      }
+    }
+  }
+}

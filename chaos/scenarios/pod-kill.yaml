@@ -1,0 +1,61 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: pod-delete
+  namespace: hecate-system
+  labels:
+    app.kubernetes.io/part-of: hecate-platform
+    app.kubernetes.io/component: chaos
+    litmuschaos.io/version: "3.0.0"
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["create", "delete", "get", "list", "patch", "update", "deletecollection"]
+      - apiGroups: [""]
+        resources: ["events"]
+        verbs: ["create", "get", "list", "patch", "update"]
+      - apiGroups: [""]
+        resources: ["configmaps"]
+        verbs: ["get", "list"]
+      - apiGroups: ["apps"]
+        resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+        verbs: ["list", "get"]
+      - apiGroups: ["litmuschaos.io"]
+        resources: ["chaosengines", "chaosexperiments", "chaosresults"]
+        verbs: ["create", "list", "get", "patch", "update", "delete"]
+    image: "litmuschaos/go-runner:3.0.0"
+    imagePullPolicy: Always
+    args:
+      - -c
+      - ./experiments -name pod-delete
+    command:
+      - /bin/bash
+    env:
+      # Comma-separated list of target pod names; empty = select by label
+      - name: TARGET_PODS
+        value: ""
+      # Percentage of pods to kill in the target namespace/label set
+      - name: PODS_AFFECTED_PERC
+        value: "50"
+      # Total duration of the chaos experiment in seconds
+      - name: TOTAL_CHAOS_DURATION
+        value: "30"
+      # Interval between each successive pod kill
+      - name: CHAOS_INTERVAL
+        value: "10"
+      # Force deletion (skip graceful termination)
+      - name: FORCE
+        value: "false"
+      # Label selector used to identify target pods
+      - name: TARGET_CONTAINER
+        value: ""
+      - name: RAMP_TIME
+        value: "5"
+      - name: SEQUENCE
+        value: "parallel"
+    labels:
+      name: pod-delete
+      app.kubernetes.io/part-of: litmus

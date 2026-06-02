@@ -1,0 +1,231 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.venv/
+venv/
+env/
+ENV/
+.env.local
+.env.*.local
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+pytestmark
+
+# Node.js / Frontend
+node_modules/
+.npm
+.next/
+.nuxt/
+.turbo/
+.cache/
+.parcel-cache/
+.output/
+.vercel/
+dist/
+build/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfvars
+terraform.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+terraform.plan
+crash.log
+crash.*.log
+
+# Kubernetes
+*.kubeconfig
+kubeconfig
+kubeconfig.*
+.kube/
+
+# Helm
+charts/*.tgz
+*.lock
+
+# IDE — JetBrains (IntelliJ, PyCharm, etc.)
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# IDE — Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.code-workspace
+
+# IDE — Vim/Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# IDE — Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS — macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# OS — Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# OS — Linux
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+secrets/
+secret.yaml
+secret.yml
+secrets.yaml
+secrets.yml
+
+# Docker
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Cryptography & Certificates
+*.pem
+*.key
+*.cert
+*.crt
+*.csr
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.asc
+
+# Logs
+logs/
+*.log
+*.log.*
+log/
+
+# Test & Coverage Reports
+test-results/
+coverage/
+htmlcov/
+junit.xml
+coverage.xml
+*.lcov
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+
+# MLflow / ML artifacts
+mlruns/
+mlartifacts/
+*.pkl
+*.joblib
+*.h5
+*.onnx
+*.pt
+*.pth
+models/
+artifacts/
+
+# Jupyter Notebooks (checkpoints only)
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Documentation builds
+docs/_build/
+docs/site/
+site/
+.mkdocs/
+
+# Misc
+*.bak
+*.tmp
+*.temp
+*.orig
+*.patch
+.make/

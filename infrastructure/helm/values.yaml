@@ -1,0 +1,7 @@
+global:
+  environment: production
+replicaCount: 1
+image:
+  repository: hecate
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"

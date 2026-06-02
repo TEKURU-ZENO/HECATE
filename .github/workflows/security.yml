@@ -1,0 +1,11 @@
+name: Security Scanner
+on:
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Vulnerability Scan
+        run: echo "Scanning workspace..."

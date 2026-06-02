@@ -1,0 +1,14 @@
+graph TD
+  subgraph Detection_Agent[Detection Agent Component]
+    consumer[Kafka Consumer]
+    evaluator[Rule Evaluator]
+    ml_model[ML Inference Model]
+    scorer[Anomaly Scorer]
+    producer[Kafka Producer]
+    
+    consumer --> evaluator
+    consumer --> ml_model
+    evaluator --> scorer
+    ml_model --> scorer
+    scorer --> producer
+  end

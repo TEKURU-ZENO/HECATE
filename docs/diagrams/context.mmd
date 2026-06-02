@@ -1,0 +1,15 @@
+C4Context
+  title System Context Diagram for HECATE
+  Person(sre, "Site Reliability Engineer", "Monitors platform health and reviews incident reports")
+  Person(devops, "DevOps Engineer", "Manages deployments and infrastructure")
+  System(hecate, "HECATE", "Autonomous cloud reliability platform that detects, diagnoses, and remediates infrastructure failures")
+  System_Ext(kubernetes, "Kubernetes Cluster", "Hosts all application workloads and HECATE agents")
+  System_Ext(cloud, "Cloud Provider (AWS EKS)", "Provides managed Kubernetes, compute, networking, and storage")
+  System_Ext(github, "GitHub", "Source code and GitOps repository")
+  System_Ext(argocd, "ArgoCD", "GitOps continuous delivery")
+  Rel(sre, hecate, "Views dashboards, reviews incidents, configures policies")
+  Rel(devops, hecate, "Manages deployments, reviews remediation history")
+  Rel(hecate, kubernetes, "Monitors, reads metrics, executes remediation actions")
+  Rel(hecate, cloud, "Provisions infrastructure via Terraform")
+  Rel(github, argocd, "Triggers deployments on git push")
+  Rel(argocd, kubernetes, "Deploys HECATE services")

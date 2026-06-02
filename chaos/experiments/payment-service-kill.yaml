@@ -1,0 +1,99 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: payment-service-kill
+  namespace: hecate-system
+  labels:
+    app.kubernetes.io/part-of: hecate-platform
+    app.kubernetes.io/component: chaos
+spec:
+  # Target application
+  appinfo:
+    appns: "production"
+    applabel: "app=payment-service"
+    appkind: "deployment"
+
+  # Run the experiment (active = run, stop = halt)
+  engineState: "active"
+
+  # Chaos service account with pod-delete permissions
+  chaosServiceAccount: chaos-service-account
+
+  # Monitoring probe — validates steady state
+  monitoring: true
+
+  # Annotations to prevent chaos from re-running without manual reset
+  jobCleanUpPolicy: "delete"
+
+  components:
+    runner:
+      image: "litmuschaos/chaos-runner:3.0.0"
+      imagePullPolicy: Always
+
+  experiments:
+    - name: pod-delete
+      spec:
+        probe:
+          # Prometheus probe: verify error rate stays below 5% during chaos
+          - name: "payment-service-error-rate"
+            type: "promProbe"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 2
+              retry: 1
+              probePollingInterval: 2
+            promProbe/inputs:
+              endpoint: "http://prometheus.observability.svc.cluster.local:9090"
+              query: >
+                rate(http_requests_total{service="payment-service",status=~"5.."}[1m])
+                / rate(http_requests_total{service="payment-service"}[1m]) < 0.05
+              comparator:
+                type: "float"
+                criteria: "<"
+                value: "0.05"
+
+          # HTTP probe: check payment-service health endpoint
+          - name: "payment-service-health"
+            type: "httpProbe"
+            mode: "Edge"
+            runProperties:
+              probeTimeout: 10
+              interval: 2
+              retry: 3
+            httpProbe/inputs:
+              url: "http://payment-service.production.svc.cluster.local/health"
+              insecureSkipVerify: false
+              method:
+                get:
+                  criteria: "=="
+                  responseCode: "200"
+
+          # k8s probe: verify HECATE remediation agent is running
+          - name: "hecate-remediation-agent-healthy"
+            type: "k8sProbe"
+            mode: "Edge"
+            runProperties:
+              probeTimeout: 15
+              interval: 5
+              retry: 3
+            k8sProbe/inputs:
+              resource: "pod"
+              namespace: "hecate-agents"
+              labelSelector: "app=remediation-agent"
+              operation: "present"
+
+        components:
+          env:
+            - name: TARGET_PODS
+              value: ""
+            - name: PODS_AFFECTED_PERC
+              value: "100"
+            - name: TOTAL_CHAOS_DURATION
+              value: "30"
+            - name: CHAOS_INTERVAL
+              value: "10"
+            - name: FORCE
+              value: "false"
+            - name: RAMP_TIME
+              value: "5"

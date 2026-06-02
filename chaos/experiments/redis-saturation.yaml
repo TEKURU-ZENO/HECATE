@@ -1,0 +1,92 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: redis-saturation
+  namespace: hecate-system
+  labels:
+    app.kubernetes.io/part-of: hecate-platform
+    app.kubernetes.io/component: chaos
+spec:
+  appinfo:
+    appns: "hecate-infra"
+    applabel: "app=redis"
+    appkind: "statefulset"
+
+  engineState: "active"
+  chaosServiceAccount: chaos-service-account
+  monitoring: true
+  jobCleanUpPolicy: "delete"
+
+  components:
+    runner:
+      image: "litmuschaos/chaos-runner:3.0.0"
+      imagePullPolicy: Always
+
+  experiments:
+    - name: pod-memory-hog
+      spec:
+        probe:
+          # Prometheus probe: Redis memory usage should not exceed 95%
+          - name: "redis-memory-below-95pct"
+            type: "promProbe"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 3
+              retry: 2
+              probePollingInterval: 3
+            promProbe/inputs:
+              endpoint: "http://prometheus.observability.svc.cluster.local:9090"
+              query: >
+                redis_memory_used_bytes / redis_memory_max_bytes < 0.95
+              comparator:
+                type: "float"
+                criteria: "<"
+                value: "0.95"
+
+          # Prometheus probe: HECATE detection agent should detect the anomaly
+          - name: "hecate-detects-redis-anomaly"
+            type: "promProbe"
+            mode: "EOT"
+            runProperties:
+              probeTimeout: 30
+              interval: 5
+              retry: 5
+            promProbe/inputs:
+              endpoint: "http://prometheus.observability.svc.cluster.local:9090"
+              query: >
+                increase(hecate_anomalies_detected_total{component="redis"}[5m]) > 0
+              comparator:
+                type: "float"
+                criteria: ">"
+                value: "0"
+
+          # HTTP probe: Redis should accept connections throughout
+          - name: "redis-accepts-connections"
+            type: "cmdProbe"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 5
+              retry: 2
+            cmdProbe/inputs:
+              command: >
+                redis-cli -h redis.hecate-infra.svc.cluster.local PING
+              comparator:
+                type: "string"
+                criteria: "=="
+                value: "PONG"
+
+        components:
+          env:
+            # 800MB memory pressure to bring Redis near its 1GB limit
+            - name: MEMORY_CONSUMPTION
+              value: "800"
+            - name: NUMBER_OF_WORKERS
+              value: "2"
+            - name: TOTAL_CHAOS_DURATION
+              value: "120"
+            - name: PODS_AFFECTED_PERC
+              value: "100"
+            - name: RAMP_TIME
+              value: "10"

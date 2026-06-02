@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hecate.io/contracts/anomaly-topic",
+  "title": "AnomalyEvent",
+  "description": "Anomaly detection event published by the Detection Agent to the hecate.anomalies Kafka topic",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp", "source", "payload", "triggered_by", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUIDv4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["anomaly.detected", "anomaly.resolved"],
+      "description": "Whether this event signals a new anomaly or its resolution"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when the anomaly was detected or resolved"
+    },
+    "source": {
+      "type": "object",
+      "description": "Kubernetes origin of the anomaly",
+      "required": ["cluster_id", "namespace", "service_name"],
+      "additionalProperties": false,
+      "properties": {
+        "cluster_id": {
+          "type": "string",
+          "description": "Kubernetes cluster identifier"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace"
+        },
+        "service_name": {
+          "type": "string",
+          "description": "Name of the affected service"
+        },
+        "node_id": {
+          "type": "string",
+          "description": "Kubernetes node name (optional)"
+        },
+        "pod_id": {
+          "type": "string",
+          "description": "Kubernetes pod name (optional)"
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "description": "Anomaly detection result data",
+      "required": [
+        "anomaly_id",
+        "metric_name",
+        "current_value",
+        "baseline_value",
+        "deviation_score",
+        "severity",
+        "detection_method",
+        "confidence_score"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "anomaly_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this anomaly instance"
+        },
+        "metric_name": {
+          "type": "string",
+          "description": "The metric on which the anomaly was detected"
+        },
+        "current_value": {
+          "type": "number",
+          "description": "Observed metric value at detection time"
+        },
+        "baseline_value": {
+          "type": "number",
+          "description": "Expected (baseline) metric value for this time window"
+        },
+        "deviation_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Normalized deviation score between 0.0 (no deviation) and 1.0 (maximum deviation)"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "description": "Severity classification based on deviation score and business impact"
+        },
+        "detection_method": {
+          "type": "string",
+          "enum": ["threshold", "zscore", "isolation_forest", "lstm"],
+          "description": "Algorithm used to detect the anomaly"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Model confidence in this anomaly classification (0.0–1.0)"
+        },
+        "window_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Evaluation window in seconds over which the anomaly was detected"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Additional contextual labels",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "triggered_by": {
+      "type": "string",
+      "format": "uuid",
+      "description": "event_id of the MetricsEvent that triggered this anomaly detection"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema",
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "examples": [
+    {
+      "event_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "event_type": "anomaly.detected",
+      "timestamp": "2025-01-15T10:31:05Z",
+      "source": {
+        "cluster_id": "prod-us-east-1",
+        "namespace": "hecate-agents",
+        "service_name": "monitoring-agent"
+      },
+      "payload": {
+        "anomaly_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "metric_name": "container_cpu_usage_seconds_total",
+        "current_value": 87.4,
+        "baseline_value": 32.1,
+        "deviation_score": 0.87,
+        "severity": "high",
+        "detection_method": "isolation_forest",
+        "confidence_score": 0.94,
+        "window_seconds": 300
+      },
+      "triggered_by": "550e8400-e29b-41d4-a716-446655440000",
+      "schema_version": "1.0.0"
+    }
+  ]
+}

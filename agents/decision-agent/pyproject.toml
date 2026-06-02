@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "decision-agent"
+version = "0.1.0"
+description = "HECATE Decision Agent — Maps incident root causes to auto-remediation policies"
+authors = [{name = "Dev Mehta"}]
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

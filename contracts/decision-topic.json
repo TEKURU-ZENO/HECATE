@@ -1,0 +1,175 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hecate.io/contracts/decision-topic",
+  "title": "DecisionEvent",
+  "description": "Autonomous decision event published by the Decision Agent to the hecate.decisions Kafka topic",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp", "incident_id", "rca_id", "payload", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUIDv4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["decision.made", "decision.deferred", "decision.escalated"],
+      "description": "Outcome of the decision process"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when the decision was made"
+    },
+    "incident_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Incident being acted upon"
+    },
+    "rca_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "event_id of the RCAEvent this decision is based on"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Details of the autonomous decision",
+      "required": [
+        "action_type",
+        "target",
+        "parameters",
+        "risk_score",
+        "confidence_score",
+        "policy_id",
+        "requires_approval"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "restart_pod",
+            "scale_deployment",
+            "rollback_release",
+            "cordon_node",
+            "terraform_apply",
+            "escalate"
+          ],
+          "description": "The type of remediation action to be taken"
+        },
+        "target": {
+          "type": "object",
+          "description": "Kubernetes resource or cloud resource to act upon",
+          "required": ["namespace", "service_name"],
+          "additionalProperties": false,
+          "properties": {
+            "namespace": {
+              "type": "string",
+              "description": "Kubernetes namespace"
+            },
+            "service_name": {
+              "type": "string",
+              "description": "Service name"
+            },
+            "deployment_name": {
+              "type": "string",
+              "description": "Kubernetes Deployment name (if applicable)"
+            },
+            "pod_name": {
+              "type": "string",
+              "description": "Kubernetes Pod name (if applicable)"
+            },
+            "node_name": {
+              "type": "string",
+              "description": "Kubernetes Node name (if applicable)"
+            },
+            "cluster_id": {
+              "type": "string",
+              "description": "Target cluster identifier"
+            }
+          }
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Action-specific parameters (e.g., {'replicas': 5} for scale_deployment)",
+          "additionalProperties": true
+        },
+        "risk_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Estimated risk of executing this action (0.0 = safe, 1.0 = high risk)"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Decision agent confidence that this is the correct action"
+        },
+        "policy_id": {
+          "type": "string",
+          "description": "Identifier of the policy rule that triggered this decision"
+        },
+        "requires_approval": {
+          "type": "boolean",
+          "description": "Whether this action requires human approval before execution"
+        },
+        "approval_deadline_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Seconds to wait for approval before auto-deferring (if requires_approval is true)"
+        },
+        "escalation_reason": {
+          "type": "string",
+          "description": "Human-readable reason for escalation (if event_type is decision.escalated)"
+        },
+        "estimated_recovery_time_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated time in seconds for the action to restore normal operation"
+        },
+        "rollback_plan": {
+          "type": "string",
+          "description": "Description of the rollback steps if the action fails"
+        }
+      }
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema",
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "examples": [
+    {
+      "event_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "event_type": "decision.made",
+      "timestamp": "2025-01-15T10:33:10Z",
+      "incident_id": "inc-20250115-001",
+      "rca_id": "9f4b2e1a-3c5d-4e6f-8a7b-1c2d3e4f5a6b",
+      "payload": {
+        "action_type": "restart_pod",
+        "target": {
+          "namespace": "production",
+          "service_name": "payment-service",
+          "deployment_name": "payment-service",
+          "pod_name": "payment-service-7d4f9c8b6-xm9pq",
+          "cluster_id": "prod-us-east-1"
+        },
+        "parameters": {
+          "grace_period_seconds": 30,
+          "reason": "DB connection pool exhaustion"
+        },
+        "risk_score": 0.25,
+        "confidence_score": 0.91,
+        "policy_id": "pol-restart-on-connection-exhaustion",
+        "requires_approval": false,
+        "estimated_recovery_time_seconds": 45,
+        "rollback_plan": "No rollback required; pod will be restarted automatically if restart fails"
+      },
+      "schema_version": "1.0.0"
+    }
+  ]
+}

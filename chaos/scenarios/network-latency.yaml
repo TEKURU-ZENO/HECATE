@@ -1,0 +1,60 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: pod-network-latency
+  namespace: hecate-system
+  labels:
+    app.kubernetes.io/part-of: hecate-platform
+    app.kubernetes.io/component: chaos
+    litmuschaos.io/version: "3.0.0"
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: [""]
+        resources: ["pods", "pods/exec", "pods/log", "events", "services", "configmaps"]
+        verbs: ["create", "delete", "get", "list", "patch", "update"]
+      - apiGroups: ["apps"]
+        resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+        verbs: ["list", "get"]
+      - apiGroups: ["litmuschaos.io"]
+        resources: ["chaosengines", "chaosexperiments", "chaosresults"]
+        verbs: ["create", "list", "get", "patch", "update", "delete"]
+    image: "litmuschaos/go-runner:3.0.0"
+    imagePullPolicy: Always
+    args:
+      - -c
+      - ./experiments -name pod-network-latency
+    command:
+      - /bin/bash
+    env:
+      # Network latency in milliseconds
+      - name: NETWORK_LATENCY
+        value: "500"
+      # Jitter in milliseconds (random variation on latency)
+      - name: JITTER
+        value: "50"
+      # Total experiment duration in seconds
+      - name: TOTAL_CHAOS_DURATION
+        value: "60"
+      # Percentage of pods affected
+      - name: PODS_AFFECTED_PERC
+        value: "50"
+      # Destination hosts to apply latency to (comma-separated); empty = all
+      - name: DESTINATION_IPS
+        value: ""
+      - name: DESTINATION_HOSTS
+        value: ""
+      # Network interface to inject latency on
+      - name: NETWORK_INTERFACE
+        value: "eth0"
+      # Ramp time before chaos injection
+      - name: RAMP_TIME
+        value: "5"
+      - name: SEQUENCE
+        value: "parallel"
+      - name: TARGET_CONTAINER
+        value: ""
+    labels:
+      name: pod-network-latency
+      app.kubernetes.io/part-of: litmus

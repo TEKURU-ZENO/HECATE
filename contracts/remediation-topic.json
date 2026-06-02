@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hecate.io/contracts/remediation-topic",
+  "title": "RemediationEvent",
+  "description": "Remediation execution event published by the Remediation Agent to the hecate.remediation Kafka topic",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp", "incident_id", "decision_id", "payload", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUIDv4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["remediation.started", "remediation.completed", "remediation.failed"],
+      "description": "Lifecycle stage of the remediation action"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp for this lifecycle event"
+    },
+    "incident_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Incident this remediation is resolving"
+    },
+    "decision_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "event_id of the DecisionEvent that authorized this action"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Remediation action details and outcome",
+      "required": ["action_type", "target", "execution_status"],
+      "additionalProperties": false,
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "restart_pod",
+            "scale_deployment",
+            "rollback_release",
+            "cordon_node",
+            "terraform_apply",
+            "escalate"
+          ],
+          "description": "The action that was executed"
+        },
+        "target": {
+          "type": "object",
+          "description": "The Kubernetes or cloud resource that was acted upon",
+          "required": ["namespace", "service_name"],
+          "additionalProperties": false,
+          "properties": {
+            "namespace": {
+              "type": "string"
+            },
+            "service_name": {
+              "type": "string"
+            },
+            "deployment_name": {
+              "type": "string"
+            },
+            "pod_name": {
+              "type": "string"
+            },
+            "node_name": {
+              "type": "string"
+            },
+            "cluster_id": {
+              "type": "string"
+            }
+          }
+        },
+        "execution_status": {
+          "type": "string",
+          "enum": ["pending", "running", "succeeded", "failed", "rolled_back"],
+          "description": "Current execution status of the remediation"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether the remediation achieved its intended outcome (present when event_type is remediation.completed or remediation.failed)"
+        },
+        "execution_duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total execution time in milliseconds (present on completion)"
+        },
+        "error_message": {
+          "type": "string",
+          "description": "Error description when execution_status is failed"
+        },
+        "error_code": {
+          "type": "string",
+          "description": "Machine-readable error code (e.g. K8S_FORBIDDEN, TIMEOUT)"
+        },
+        "outcome_summary": {
+          "type": "string",
+          "description": "Human-readable summary of the remediation outcome"
+        },
+        "pre_action_snapshot": {
+          "type": "object",
+          "description": "State of the resource before remediation (for audit trail)",
+          "additionalProperties": true
+        },
+        "post_action_snapshot": {
+          "type": "object",
+          "description": "State of the resource after remediation",
+          "additionalProperties": true
+        },
+        "rollback_triggered": {
+          "type": "boolean",
+          "description": "Whether a rollback was automatically triggered after failure",
+          "default": false
+        }
+      }
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema",
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "examples": [
+    {
+      "event_id": "b2c3d4e5-f6a7-8901-bcde-f01234567891",
+      "event_type": "remediation.completed",
+      "timestamp": "2025-01-15T10:33:58Z",
+      "incident_id": "inc-20250115-001",
+      "decision_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "payload": {
+        "action_type": "restart_pod",
+        "target": {
+          "namespace": "production",
+          "service_name": "payment-service",
+          "pod_name": "payment-service-7d4f9c8b6-xm9pq",
+          "cluster_id": "prod-us-east-1"
+        },
+        "execution_status": "succeeded",
+        "success": true,
+        "execution_duration_ms": 38200,
+        "outcome_summary": "Pod payment-service-7d4f9c8b6-xm9pq restarted successfully. New pod payment-service-7d4f9c8b6-nk8rt is Running and passing health checks. DB connection pool utilization normalized to 41%.",
+        "rollback_triggered": false
+      },
+      "schema_version": "1.0.0"
+    }
+  ]
+}

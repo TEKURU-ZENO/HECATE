@@ -1,0 +1,30 @@
+graph TD
+  subgraph EKS["AWS EKS Cluster"]
+    subgraph sys["hecate-system"]
+      gw[API Gateway]
+      api[Dashboard API]
+    end
+    subgraph agents["hecate-agents"]
+      ma[Monitoring Agent]
+      da[Detection Agent]
+      rca[RCA Agent]
+      dec[Decision Agent]
+      rem[Remediation Agent]
+      lea[Learning Agent]
+      rep[Reporting Agent]
+    end
+    subgraph obs["hecate-observability"]
+      prom[Prometheus]
+      graf[Grafana]
+      jaeger[Jaeger]
+    end
+    subgraph data["hecate-data"]
+      pg[PostgreSQL]
+      redis[Redis]
+      kafka[Kafka]
+      es[Elasticsearch]
+    end
+    subgraph dash["hecate-dashboard"]
+      fe[Frontend]
+    end
+  end

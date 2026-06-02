@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hecate.io/contracts/rca-topic",
+  "title": "RCAEvent",
+  "description": "Root Cause Analysis event published by the RCA Agent to the hecate.rca Kafka topic",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp", "incident_id", "anomaly_id", "rca_result", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUIDv4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["rca.completed", "rca.failed"],
+      "description": "Indicates whether RCA succeeded or failed"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when RCA analysis was completed or failed"
+    },
+    "incident_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the incident being analyzed"
+    },
+    "anomaly_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "event_id of the AnomalyEvent that triggered this RCA"
+    },
+    "analysis_duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Time taken by the RCA engine in milliseconds"
+    },
+    "rca_result": {
+      "type": "object",
+      "description": "The root cause analysis findings",
+      "required": [
+        "root_cause_service",
+        "root_cause_description",
+        "affected_services",
+        "dependency_path",
+        "confidence_score",
+        "evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "root_cause_service": {
+          "type": "string",
+          "description": "Service identified as the root cause"
+        },
+        "root_cause_description": {
+          "type": "string",
+          "description": "Human-readable description of the identified root cause"
+        },
+        "affected_services": {
+          "type": "array",
+          "description": "All services impacted by this incident",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "dependency_path": {
+          "type": "array",
+          "description": "Ordered list of services in the causal chain, from root cause to final impact",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "RCA model confidence in the root cause identification"
+        },
+        "failure_mode": {
+          "type": "string",
+          "enum": [
+            "resource_exhaustion",
+            "network_partition",
+            "cascading_failure",
+            "external_dependency",
+            "configuration_error",
+            "code_regression",
+            "unknown"
+          ],
+          "description": "Classified failure mode"
+        },
+        "evidence": {
+          "type": "array",
+          "description": "Supporting evidence for the root cause determination",
+          "items": {
+            "type": "object",
+            "required": ["type", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["metric_spike", "log_pattern", "dependency_graph", "historical_correlation", "topology_change"],
+                "description": "Category of evidence"
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of this evidence"
+              },
+              "metric_name": {
+                "type": "string",
+                "description": "Relevant metric name (if evidence is metric-based)"
+              },
+              "value": {
+                "type": "number",
+                "description": "Metric value at time of incident (if applicable)"
+              },
+              "service": {
+                "type": "string",
+                "description": "Service this evidence pertains to"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When this evidence was observed"
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details when event_type is rca.failed"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema",
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "examples": [
+    {
+      "event_id": "9f4b2e1a-3c5d-4e6f-8a7b-1c2d3e4f5a6b",
+      "event_type": "rca.completed",
+      "timestamp": "2025-01-15T10:32:45Z",
+      "incident_id": "inc-20250115-001",
+      "anomaly_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "analysis_duration_ms": 1840,
+      "rca_result": {
+        "root_cause_service": "payment-service",
+        "root_cause_description": "payment-service database connection pool exhausted due to unindexed query causing full table scans",
+        "affected_services": ["payment-service", "order-service", "api-gateway"],
+        "dependency_path": ["api-gateway", "order-service", "payment-service"],
+        "confidence_score": 0.91,
+        "failure_mode": "resource_exhaustion",
+        "evidence": [
+          {
+            "type": "metric_spike",
+            "description": "DB connection pool utilization at 100% for 8 minutes prior to cascading failure",
+            "metric_name": "db_connection_pool_usage",
+            "value": 100.0,
+            "service": "payment-service",
+            "timestamp": "2025-01-15T10:22:00Z"
+          },
+          {
+            "type": "log_pattern",
+            "description": "Repeated 'connection pool timeout' errors in payment-service logs",
+            "service": "payment-service",
+            "timestamp": "2025-01-15T10:23:30Z"
+          }
+        ]
+      },
+      "schema_version": "1.0.0"
+    }
+  ]
+}

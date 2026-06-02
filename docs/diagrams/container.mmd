@@ -1,0 +1,26 @@
+C4Container
+  title Container Diagram for HECATE
+  System_Boundary(hecate_boundary, "HECATE System") {
+    Container(fe, "Dashboard Frontend", "React, Tailwind", "Visualizes real-time status")
+    Container(api, "Dashboard API / Gateway", "FastAPI", "REST API & WebSockets for frontend")
+    ContainerDb(postgres, "PostgreSQL", "Relational", "Incident data, policies, users")
+    ContainerDb(redis, "Redis", "Key-Value", "Session states, cache, locking")
+    ContainerDb(kafka, "Apache Kafka", "Message Log", "Broker for inter-agent events")
+    ContainerDb(timescale, "TimescaleDB", "Time-series", "Stores metric history")
+    
+    Container(agent_m, "Monitoring Agent", "Python", "Pulls Prometheus metrics")
+    Container(agent_d, "Detection Agent", "Python", "Evaluates anomalies")
+    Container(agent_r, "RCA Agent", "Python", "Trace root cause")
+    Container(agent_dec, "Decision Agent", "Python", "Matches policy")
+    Container(agent_rem, "Remediation Agent", "Python", "Runs self-healing")
+  }
+  Rel(fe, api, "Queries", "JSON/WebSockets")
+  Rel(api, postgres, "Reads/Writes")
+  Rel(agent_m, kafka, "Publishes raw metrics", "Kafka Event")
+  Rel(kafka, agent_d, "Consumes raw metrics", "Kafka Event")
+  Rel(agent_d, kafka, "Publishes anomalies", "Kafka Event")
+  Rel(kafka, agent_r, "Consumes anomalies", "Kafka Event")
+  Rel(agent_r, kafka, "Publishes RCA", "Kafka Event")
+  Rel(kafka, agent_dec, "Consumes RCA", "Kafka Event")
+  Rel(agent_dec, kafka, "Publishes decisions", "Kafka Event")
+  Rel(kafka, agent_rem, "Consumes decisions", "Kafka Event")

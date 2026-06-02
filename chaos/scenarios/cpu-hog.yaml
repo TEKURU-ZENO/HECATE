@@ -1,0 +1,57 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: pod-cpu-hog
+  namespace: hecate-system
+  labels:
+    app.kubernetes.io/part-of: hecate-platform
+    app.kubernetes.io/component: chaos
+    litmuschaos.io/version: "3.0.0"
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: [""]
+        resources: ["pods", "pods/exec", "pods/log", "events"]
+        verbs: ["create", "delete", "get", "list", "patch", "update"]
+      - apiGroups: ["apps"]
+        resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+        verbs: ["list", "get"]
+      - apiGroups: ["litmuschaos.io"]
+        resources: ["chaosengines", "chaosexperiments", "chaosresults"]
+        verbs: ["create", "list", "get", "patch", "update", "delete"]
+    image: "litmuschaos/go-runner:3.0.0"
+    imagePullPolicy: Always
+    args:
+      - -c
+      - ./experiments -name pod-cpu-hog
+    command:
+      - /bin/bash
+    env:
+      # Target pod name(s); empty = use label selector
+      - name: TARGET_PODS
+        value: ""
+      # Percentage of pods affected
+      - name: PODS_AFFECTED_PERC
+        value: "50"
+      # Total experiment duration in seconds
+      - name: TOTAL_CHAOS_DURATION
+        value: "60"
+      # Number of CPU cores to stress (empty = all available)
+      - name: CPU_CORES
+        value: "2"
+      # CPU load as percentage per core
+      - name: CPU_LOAD
+        value: "100"
+      # Ramp-up time before chaos begins (seconds)
+      - name: RAMP_TIME
+        value: "10"
+      # Execution sequence: parallel or serial
+      - name: SEQUENCE
+        value: "parallel"
+      # Name of the target container; empty = first container
+      - name: TARGET_CONTAINER
+        value: ""
+    labels:
+      name: pod-cpu-hog
+      app.kubernetes.io/part-of: litmus

@@ -1,0 +1,52 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: pod-memory-hog
+  namespace: hecate-system
+  labels:
+    app.kubernetes.io/part-of: hecate-platform
+    app.kubernetes.io/component: chaos
+    litmuschaos.io/version: "3.0.0"
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: [""]
+        resources: ["pods", "pods/exec", "pods/log", "events"]
+        verbs: ["create", "delete", "get", "list", "patch", "update"]
+      - apiGroups: ["apps"]
+        resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+        verbs: ["list", "get"]
+      - apiGroups: ["litmuschaos.io"]
+        resources: ["chaosengines", "chaosexperiments", "chaosresults"]
+        verbs: ["create", "list", "get", "patch", "update", "delete"]
+    image: "litmuschaos/go-runner:3.0.0"
+    imagePullPolicy: Always
+    args:
+      - -c
+      - ./experiments -name pod-memory-hog
+    command:
+      - /bin/bash
+    env:
+      # Amount of memory to consume in MiB
+      - name: MEMORY_CONSUMPTION
+        value: "500"
+      # Number of workers to spawn for memory pressure
+      - name: NUMBER_OF_WORKERS
+        value: "4"
+      # Total experiment duration in seconds
+      - name: TOTAL_CHAOS_DURATION
+        value: "60"
+      # Percentage of pods affected
+      - name: PODS_AFFECTED_PERC
+        value: "50"
+      # Ramp time before chaos begins
+      - name: RAMP_TIME
+        value: "5"
+      - name: SEQUENCE
+        value: "parallel"
+      - name: TARGET_CONTAINER
+        value: ""
+    labels:
+      name: pod-memory-hog
+      app.kubernetes.io/part-of: litmus

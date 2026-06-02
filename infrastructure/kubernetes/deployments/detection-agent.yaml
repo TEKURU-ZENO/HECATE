@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: detection-agent
+  namespace: hecate-agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: detection-agent
+  template:
+    metadata:
+      labels:
+        app: detection-agent
+    spec:
+      serviceAccountName: monitoring-agent
+      containers:
+        - name: detection-agent
+          image: hecate/detection-agent:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"

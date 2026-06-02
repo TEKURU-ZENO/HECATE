@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hecate.io/contracts/reporting-topic",
+  "title": "ReportingEvent",
+  "description": "Report generation event published by the Reporting Agent to the hecate.reports Kafka topic",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp", "payload", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUIDv4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["report.generated"],
+      "description": "Report lifecycle event type"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when the report was generated"
+    },
+    "payload": {
+      "type": "object",
+      "description": "The generated report and its metadata",
+      "required": ["incident_id", "report_type", "content", "mttr_seconds", "generated_by"],
+      "additionalProperties": false,
+      "properties": {
+        "incident_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The incident this report covers"
+        },
+        "report_type": {
+          "type": "string",
+          "enum": ["incident_summary", "rca_report", "executive_summary"],
+          "description": "The type and audience of the report"
+        },
+        "content": {
+          "type": "object",
+          "description": "Structured report content (format depends on report_type)",
+          "required": ["title", "summary"],
+          "additionalProperties": true,
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Report title"
+            },
+            "summary": {
+              "type": "string",
+              "description": "Executive summary paragraph"
+            },
+            "timeline": {
+              "type": "array",
+              "description": "Chronological event timeline",
+              "items": {
+                "type": "object",
+                "required": ["timestamp", "event", "actor"],
+                "properties": {
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "event": {
+                    "type": "string"
+                  },
+                  "actor": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "root_cause": {
+              "type": "string",
+              "description": "Root cause summary"
+            },
+            "impact": {
+              "type": "object",
+              "description": "Impact assessment",
+              "properties": {
+                "affected_users": {
+                  "type": "integer"
+                },
+                "affected_services": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "downtime_seconds": {
+                  "type": "integer"
+                },
+                "revenue_impact_usd": {
+                  "type": "number"
+                }
+              }
+            },
+            "remediation_steps": {
+              "type": "array",
+              "description": "Steps taken to remediate the incident",
+              "items": {
+                "type": "string"
+              }
+            },
+            "action_items": {
+              "type": "array",
+              "description": "Follow-up action items to prevent recurrence",
+              "items": {
+                "type": "object",
+                "required": ["item", "owner", "due_date"],
+                "properties": {
+                  "item": { "type": "string" },
+                  "owner": { "type": "string" },
+                  "due_date": { "type": "string", "format": "date" },
+                  "priority": { "type": "string", "enum": ["critical", "high", "medium", "low"] }
+                }
+              }
+            }
+          }
+        },
+        "mttr_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Mean Time To Resolution for this incident in seconds"
+        },
+        "detection_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the anomaly was first detected"
+        },
+        "resolution_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the incident was fully resolved"
+        },
+        "generated_by": {
+          "type": "string",
+          "enum": ["reporting-agent"],
+          "description": "Identifies the generating agent"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "markdown", "html"],
+          "description": "Format of the content field",
+          "default": "json"
+        },
+        "recipients": {
+          "type": "array",
+          "description": "Notification recipients (e.g. Slack channel, email list)",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema",
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "examples": [
+    {
+      "event_id": "c3d4e5f6-a7b8-9012-cdef-012345678902",
+      "event_type": "report.generated",
+      "timestamp": "2025-01-15T10:40:00Z",
+      "payload": {
+        "incident_id": "inc-20250115-001",
+        "report_type": "incident_summary",
+        "content": {
+          "title": "Incident INC-20250115-001: Payment Service Outage",
+          "summary": "A database connection pool exhaustion in payment-service caused cascading failures in order-service and api-gateway. HECATE autonomously detected, diagnosed, and remediated the incident in 9 minutes 58 seconds by restarting the affected pod.",
+          "root_cause": "Unindexed SQL query causing full table scans exhausted the DB connection pool",
+          "remediation_steps": [
+            "HECATE Detection Agent identified CPU and latency anomalies at 10:31:05 UTC",
+            "RCA Agent traced root cause to payment-service DB connection pool at 10:32:45 UTC",
+            "Decision Agent approved pod restart with risk_score 0.25 at 10:33:10 UTC",
+            "Remediation Agent restarted pod; new pod healthy at 10:33:58 UTC"
+          ]
+        },
+        "mttr_seconds": 598,
+        "detection_time": "2025-01-15T10:31:05Z",
+        "resolution_time": "2025-01-15T10:40:03Z",
+        "generated_by": "reporting-agent",
+        "recipients": ["#incidents-prod", "sre-team@hecate.io"]
+      },
+      "schema_version": "1.0.0"
+    }
+  ]
+}

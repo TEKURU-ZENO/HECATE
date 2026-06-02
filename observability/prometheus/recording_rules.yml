@@ -1,0 +1,87 @@
+groups:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # HECATE pre-computed recording rules
+  # These aggregations reduce query complexity for Grafana dashboards and SLO
+  # calculations, and are stored as new time series in Prometheus.
+  # ──────────────────────────────────────────────────────────────────────────────
+  - name: hecate.recording
+    interval: 30s
+    rules:
+      # CPU usage (5m average per namespace/pod)
+      - record: hecate:cpu_usage:avg5m
+        expr: avg(rate(container_cpu_usage_seconds_total[5m])) by (namespace, pod)
+
+      # CPU usage (5m average per node)
+      - record: hecate:cpu_usage_node:avg5m
+        expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance)
+
+      # Memory usage (5m average per namespace/pod)
+      - record: hecate:memory_usage:avg5m
+        expr: avg(container_memory_usage_bytes) by (namespace, pod)
+
+      # Memory usage percentage
+      - record: hecate:memory_usage_pct:avg5m
+        expr: >
+          avg(container_memory_usage_bytes / container_spec_memory_limit_bytes) by (namespace, pod)
+
+      # HTTP error rate (5m window, per service)
+      - record: hecate:error_rate:avg5m
+        expr: >
+          rate(http_requests_total{status=~"5.."}[5m])
+          / rate(http_requests_total[5m])
+
+      # Request rate (rps per service)
+      - record: hecate:request_rate:avg5m
+        expr: rate(http_requests_total[5m])
+
+      # p50 request latency
+      - record: hecate:request_latency_p50:5m
+        expr: >
+          histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))
+
+      # p99 request latency
+      - record: hecate:request_latency_p99:5m
+        expr: >
+          histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+      # p999 request latency
+      - record: hecate:request_latency_p999:5m
+        expr: >
+          histogram_quantile(0.999, rate(http_request_duration_seconds_bucket[5m]))
+
+      # Kafka consumer lag per group
+      - record: hecate:kafka_consumer_lag:sum
+        expr: sum(kafka_consumer_group_lag) by (group, topic)
+
+      # Remediation success rate (10m window)
+      - record: hecate:remediation_success_rate:10m
+        expr: >
+          rate(hecate_remediation_actions_total{status="success"}[10m])
+          / rate(hecate_remediation_actions_total[10m])
+
+      # Anomaly detection rate (5m window)
+      - record: hecate:anomaly_detection_rate:5m
+        expr: rate(hecate_anomalies_detected_total[5m])
+
+      # MTTR (Mean Time to Remediate) — rolling 1h window
+      - record: hecate:mttr_seconds:1h
+        expr: >
+          avg(hecate_incident_remediation_duration_seconds) by (severity)
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # SLO burn rate recording rules (for multi-window SLO alerting)
+  # ──────────────────────────────────────────────────────────────────────────────
+  - name: hecate.slo
+    rules:
+      # Error budget consumption rate — 1h window
+      - record: hecate:slo_error_budget_burn_rate:1h
+        expr: >
+          (1 - hecate:error_rate:avg5m) < bool 0.999
+
+      # Availability (success rate) per service
+      - record: hecate:availability:5m
+        expr: >
+          1 - (
+            rate(http_requests_total{status=~"5.."}[5m])
+            / rate(http_requests_total[5m])
+          )

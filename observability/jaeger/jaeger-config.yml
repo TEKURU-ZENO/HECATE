@@ -1,0 +1,40 @@
+# HECATE Jaeger Distributed Tracing Configuration
+# Jaeger collects traces from all HECATE agents and services via OpenTelemetry.
+
+span_storage_type: elasticsearch
+
+es:
+  server-urls: http://elasticsearch:9200
+  index-prefix: jaeger
+  num-shards: 3
+  num-replicas: 1
+  max-doc-count: 10000
+  timeout: 0s
+  username: ""
+  password: ""
+  tls.enabled: false
+
+collector:
+  grpc-port: 14250
+  http-port: 14268
+  zipkin.host-port: ":9411"
+  num-workers: 50
+  queue-size: 2000
+
+query:
+  base-path: /
+  static-files: /usr/share/jaeger/static-files/
+  max-clock-skew-adjustment: 1s
+
+# Sampling strategies — adaptive for production, probabilistic for dev
+sampling:
+  strategies-file: /etc/jaeger/sampling_strategies.json
+
+# OTEL-compatible receiver (gRPC)
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"

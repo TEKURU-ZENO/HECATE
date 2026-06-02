@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hecate.io/contracts/metrics-topic",
+  "title": "MetricsEvent",
+  "description": "Telemetry metric event published by the Monitoring Agent to the hecate.metrics Kafka topic",
+  "type": "object",
+  "required": ["event_id", "event_type", "timestamp", "source", "payload", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUIDv4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "metric.cpu",
+        "metric.memory",
+        "metric.network",
+        "metric.disk",
+        "metric.latency",
+        "metric.error_rate"
+      ],
+      "description": "Discriminator for the type of telemetry metric"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when the metric was collected"
+    },
+    "source": {
+      "type": "object",
+      "description": "Origin of the telemetry data",
+      "required": ["cluster_id", "namespace", "service_name"],
+      "additionalProperties": false,
+      "properties": {
+        "cluster_id": {
+          "type": "string",
+          "description": "Kubernetes cluster identifier"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace"
+        },
+        "service_name": {
+          "type": "string",
+          "description": "Name of the service or workload"
+        },
+        "node_id": {
+          "type": "string",
+          "description": "Kubernetes node name (optional)"
+        },
+        "pod_id": {
+          "type": "string",
+          "description": "Kubernetes pod name (optional)"
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "description": "The actual metric data",
+      "required": ["metric_name", "value", "unit"],
+      "additionalProperties": false,
+      "properties": {
+        "metric_name": {
+          "type": "string",
+          "description": "Prometheus-style metric name (e.g. container_cpu_usage_seconds_total)"
+        },
+        "value": {
+          "type": "number",
+          "description": "Numeric metric value"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["percent", "bytes", "milliseconds", "requests_per_second", "count"],
+          "description": "Unit of measurement"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Arbitrary key-value label pairs (Prometheus-style)",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema",
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "examples": [
+    {
+      "event_id": "550e8400-e29b-41d4-a716-446655440000",
+      "event_type": "metric.cpu",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "source": {
+        "cluster_id": "prod-us-east-1",
+        "namespace": "hecate-agents",
+        "service_name": "monitoring-agent",
+        "node_id": "ip-10-0-1-100.ec2.internal",
+        "pod_id": "monitoring-agent-6d7f9b5c4-xk2jq"
+      },
+      "payload": {
+        "metric_name": "container_cpu_usage_seconds_total",
+        "value": 87.4,
+        "unit": "percent",
+        "labels": {
+          "container": "monitoring-agent",
+          "image": "hecate/monitoring-agent:0.1.0"
+        }
+      },
+      "schema_version": "1.0.0"
+    }
+  ]
+}

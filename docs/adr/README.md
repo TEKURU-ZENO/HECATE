@@ -1,0 +1,6 @@
+# HECATE Architecture Decision Records (ADRs)
+* [ADR-001: Event-Driven Architecture](ADR-001-event-driven-architecture.md)
+* [ADR-002: Kafka Event Backbone](ADR-002-kafka-event-backbone.md)
+* [ADR-003: Kubernetes Runtime](ADR-003-kubernetes-runtime.md)
+* [ADR-004: Multi-Agent Design](ADR-004-multi-agent-design.md)
+* [ADR-005: ML-Based Detection](ADR-005-ml-based-detection.md)

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remediation-agent
+  namespace: hecate-agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: remediation-agent
+  template:
+    metadata:
+      labels:
+        app: remediation-agent
+    spec:
+      serviceAccountName: monitoring-agent
+      containers:
+        - name: remediation-agent
+          image: hecate/remediation-agent:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
