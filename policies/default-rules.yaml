@@ -1,0 +1,10 @@
+rules:
+  cpu_high:
+    metric: cpu_usage
+    threshold: 90
+  memory_high:
+    metric: memory_usage
+    threshold: 85
+  restart_high:
+    metric: restart_count
+    threshold: 5
