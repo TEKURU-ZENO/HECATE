@@ -104,6 +104,21 @@ def get_db_connection():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS operational_memory (
+            id TEXT PRIMARY KEY,
+            incident_id TEXT,
+            incident_type TEXT,
+            incident_title TEXT,
+            root_cause_service TEXT,
+            remediation_action TEXT,
+            success BOOLEAN,
+            recovery_time_seconds INTEGER,
+            confidence_score REAL,
+            effectiveness_score REAL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
     # Check if seed policies exist
     cursor.execute("SELECT COUNT(*) FROM policies")

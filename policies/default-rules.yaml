@@ -19,3 +19,7 @@ topology:
     - [gateway, order-service]
     - [order-service, payment-service]
     - [payment-service, payment-db]
+
+learning:
+  decay_lambda: 0.02
+

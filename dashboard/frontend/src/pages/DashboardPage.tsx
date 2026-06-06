@@ -9,6 +9,14 @@ export default function DashboardPage() {
   const [remediations, setRemediations] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [systemHealth, setSystemHealth] = useState<'Healthy' | 'Warning' | 'Critical'>('Healthy');
+  const [learningFeedback, setLearningFeedback] = useState<any[]>([]);
+  const [learningStats, setLearningStats] = useState<any>({
+    total_incidents: 0,
+    avg_recovery_time: 0.0,
+    avg_effectiveness: 0.0,
+    successful_remediations: 0,
+    top_successful_action: "None"
+  });
   
   const fetchDashboardData = async () => {
     try {
@@ -33,6 +41,12 @@ export default function DashboardPage() {
       
       const agRes = await fetch('http://localhost:8000/api/v1/agents');
       if (agRes.ok) setAgents(await agRes.json());
+
+      const feedbackRes = await fetch('http://localhost:8000/api/v1/learning/feedback');
+      if (feedbackRes.ok) setLearningFeedback(await feedbackRes.json());
+
+      const statsRes = await fetch('http://localhost:8000/api/v1/learning/stats');
+      if (statsRes.ok) setLearningStats(await statsRes.json());
       
     } catch (e) {
       console.warn('Dashboard REST API not reachable yet. Using simulated feed.');
@@ -99,7 +113,7 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-white/8 bg-surface-800/40 p-6 backdrop-blur-md">
           <span className="text-xs font-semibold text-white/30 uppercase tracking-wider block mb-4">Operations Agent Network</span>
           <div className="grid grid-cols-2 gap-3">
-            {['monitoring', 'detection', 'decision', 'remediation'].map((role) => {
+            {['monitoring', 'detection', 'decision', 'remediation', 'learning'].map((role) => {
               const matchedAgent = agents.find(a => a.agentName.startsWith(role));
               const isActive = matchedAgent ? matchedAgent.status === 'active' : true;
               return (
@@ -224,6 +238,93 @@ export default function DashboardPage() {
                 ))
               )}
             </div>
+          </div>
+        </div>
+
+        {/* OPERATIONAL MEMORY & FEEDBACK CARD */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-6 backdrop-blur-md md:col-span-2">
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold text-white/30 uppercase tracking-wider block">Operational Memory & Learning Feedback</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-[10px] text-emerald-400 font-mono font-bold">
+              KNOWLEDGE BASE ACTIVE
+            </span>
+          </div>
+
+          {/* KPI Mini-cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="p-3 rounded-lg bg-black/20 border border-white/5">
+              <span className="text-[10px] text-white/40 uppercase block">Total Incidents</span>
+              <span className="text-lg font-bold text-white mt-1 block">{learningStats.total_incidents}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-black/20 border border-white/5">
+              <span className="text-[10px] text-white/40 uppercase block">Avg Recovery Time</span>
+              <span className="text-lg font-bold text-white mt-1 block">{learningStats.avg_recovery_time}s</span>
+            </div>
+            <div className="p-3 rounded-lg bg-black/20 border border-white/5">
+              <span className="text-[10px] text-white/40 uppercase block">Avg Effectiveness</span>
+              <span className="text-lg font-bold text-white mt-1 block">{(learningStats.avg_effectiveness * 100).toFixed(0)}%</span>
+            </div>
+            <div className="p-3 rounded-lg bg-black/20 border border-white/5">
+              <span className="text-[10px] text-white/40 uppercase block">Top Successful Action</span>
+              <span className="text-lg font-bold text-emerald-400 mt-1 block capitalize">{learningStats.top_successful_action.replace('_', ' ')}</span>
+            </div>
+          </div>
+
+          {/* Feedback list */}
+          <div className="space-y-3">
+            <span className="text-[11px] font-semibold text-white/50 block">Remediation Feedback Logs</span>
+            {learningFeedback.length === 0 ? (
+              <div className="text-center py-8 text-xs text-white/20 border border-dashed border-white/5 rounded-lg">No operational memories logged in the database yet.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-[11px]">
+                  <thead>
+                    <tr className="border-b border-white/5 text-white/30 text-[9px] uppercase tracking-wider">
+                      <th className="pb-2">Incident</th>
+                      <th className="pb-2">Root Cause</th>
+                      <th className="pb-2">Remediation</th>
+                      <th className="pb-2">Status</th>
+                      <th className="pb-2 text-right">Time</th>
+                      <th className="pb-2 text-right pl-4">Effectiveness</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {learningFeedback.slice(0, 5).map((fb) => {
+                      const effPercent = fb.effectiveness_score * 100;
+                      const effColor = fb.effectiveness_score >= 0.75 ? 'bg-green-500' : fb.effectiveness_score >= 0.40 ? 'bg-amber-500' : 'bg-red-500';
+                      const effText = fb.effectiveness_score >= 0.75 ? 'text-green-400' : fb.effectiveness_score >= 0.40 ? 'text-amber-400' : 'text-red-400';
+                      return (
+                        <tr key={fb.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
+                          <td className="py-2.5 max-w-[150px] truncate pr-2">
+                            <span className="text-white font-bold block">{fb.incident_title}</span>
+                            <span className="text-[9px] text-white/40">{fb.incident_type}</span>
+                          </td>
+                          <td className="py-2.5 text-white/60 pr-2">{fb.root_cause_service}</td>
+                          <td className="py-2.5 text-white/60 pr-2 capitalize">{fb.remediation_action.replace('_', ' ')}</td>
+                          <td className="py-2.5">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${fb.success ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                              {fb.success ? 'SUCCESS' : 'FAILED'}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right font-bold text-white/80">{fb.recovery_time_seconds}s</td>
+                          <td className="py-2.5 text-right pl-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className={`font-bold ${effText}`}>{effPercent.toFixed(0)}%</span>
+                              <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden hidden sm:block">
+                                <div className={`h-full ${effColor}`} style={{ width: `${effPercent}%` }} />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 

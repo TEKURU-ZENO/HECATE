@@ -71,7 +71,8 @@ def main():
         {"name": "detection-agent", "path": "agents/detection-agent"},
         {"name": "rca-agent", "path": "agents/rca-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
-        {"name": "remediation-agent", "path": "agents/remediation-agent"}
+        {"name": "remediation-agent", "path": "agents/remediation-agent"},
+        {"name": "learning-agent", "path": "agents/learning-agent"}
     ]
 
     for ag in agents:
