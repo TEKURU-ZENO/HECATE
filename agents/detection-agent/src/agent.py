@@ -15,6 +15,21 @@ class DetectionAgent:
         self._running = False
         self.event_bus = HecateEventBus(kafka_servers=settings.kafka_bootstrap_servers)
         self.rules = self._load_rules()
+        self.ml_model = None
+        self._load_ml_model()
+
+    def _load_ml_model(self):
+        try:
+            import joblib
+            ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+            model_path = os.path.join(ROOT_DIR, "ml", "models", "isolation_forest.pkl")
+            if os.path.exists(model_path):
+                self.ml_model = joblib.load(model_path)
+                log.info("detection_agent.ml_model_loaded", path=model_path)
+            else:
+                log.warn("detection_agent.ml_model_not_found_using_rules_only", path=model_path)
+        except Exception as e:
+            log.error("detection_agent.ml_model_load_failed", error=str(e))
 
     def _load_rules(self) -> dict:
         ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -54,6 +69,7 @@ class DetectionAgent:
         service_name = event.get("service_name")
         namespace = event.get("namespace")
 
+        # 1. Rule-Based Threshold Evaluation
         for rule_name, rule in self.rules.items():
             metric_name = rule.get("metric")
             threshold = rule.get("threshold")
@@ -73,8 +89,36 @@ class DetectionAgent:
                     "timestamp": time.time(),
                     "triggered_by_event": event.get("event_id")
                 }
-                log.info("detection_agent.anomaly_detected", anomaly_type=rule_name, value=current_value)
+                log.info("detection_agent.rule_anomaly_detected", anomaly_type=rule_name, value=current_value)
                 self.event_bus.publish("anomaly-topic", anomaly_payload)
+
+        # 2. Machine Learning Unsupervised Isolation Forest Evaluation
+        if self.ml_model is not None:
+            try:
+                import numpy as np
+                cpu = float(metrics.get("cpu_usage", 0.0))
+                mem = float(metrics.get("memory_usage", 0.0))
+                restarts = float(metrics.get("restart_count", 0.0))
+                
+                prediction = self.ml_model.predict(np.array([[cpu, mem, restarts]]))[0]
+                if prediction == -1:
+                    anomaly_id = str(uuid.uuid4())
+                    anomaly_payload = {
+                        "id": anomaly_id,
+                        "event_id": str(uuid.uuid4()),
+                        "anomaly_type": "ml_isolation_forest",
+                        "metric_name": "multi_dimensional_features",
+                        "current_value": f"cpu={cpu},mem={mem},restarts={restarts}",
+                        "threshold_value": 0.0,  # anomaly score boundary
+                        "service_name": service_name,
+                        "namespace": namespace,
+                        "timestamp": time.time(),
+                        "triggered_by_event": event.get("event_id")
+                    }
+                    log.info("detection_agent.ml_anomaly_detected", cpu=cpu, mem=mem, restarts=restarts)
+                    self.event_bus.publish("anomaly-topic", anomaly_payload)
+            except Exception as ex:
+                log.error("detection_agent.ml_inference_failed", error=str(ex))
 
     async def stop(self) -> None:
         self._running = False

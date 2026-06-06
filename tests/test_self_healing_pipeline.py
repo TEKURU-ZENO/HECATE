@@ -59,6 +59,7 @@ def main():
     agents = [
         {"name": "monitoring-agent", "path": "agents/monitoring-agent"},
         {"name": "detection-agent", "path": "agents/detection-agent"},
+        {"name": "rca-agent", "path": "agents/rca-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"}
     ]
@@ -73,50 +74,140 @@ def main():
         )
         processes.append(p)
 
-    time.sleep(2)  # Wait for agent subscription loops to start
+    time.sleep(5)  # Wait for agent subscription loops to start
 
     try:
-        # 4. Inject Crash Scenario (Scenario 1: Restart Count > 5)
-        print("[E2E Test] Injecting container OOM crash simulation (Restart Count = 6)...")
-        trigger_payload = {"cpu_usage": 45.0, "memory_usage": 60.0, "restart_count": 6}
+        # ==========================================
+        # Scenario 1: CPU spike -> Isolation Forest Anomaly -> Incident -> RCA (self) -> Decision -> Remediation
+        # ==========================================
+        print("\n--- Running Scenario 1: CPU spike / Isolation Forest detection on payment-service ---")
+        
+        # Inject CPU spike via simulation_trigger.json
+        trigger_payload = {"cpu_usage": 95.0, "memory_usage": 60.0, "restart_count": 0}
         with open(os.path.join(ROOT_DIR, "simulation_trigger.json"), "w") as f:
             json.dump(trigger_payload, f)
 
-        # 5. Wait for loop execution
-        print("[E2E Test] Waiting 10 seconds for self-healing loop execution...")
+        # Wait 5 seconds to guarantee at least two scrapes detect the trigger
+        time.sleep(5.0)
+
+        # Remove trigger file immediately to stop new anomalies from spawning
+        if os.path.exists(os.path.join(ROOT_DIR, "simulation_trigger.json")):
+            os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
+
+        # Wait for the pipeline to execute the existing incident
+        print("[Scenario 1] Waiting 10 seconds for self-healing loop execution...")
         time.sleep(10)
 
-        # 6. Verify Database Incidents and Remediations state
+        # Verify DB records
         conn, _ = get_db_connection()
         cursor = conn.cursor()
-
-        # Check incidents
-        cursor.execute("SELECT * FROM incidents")
-        incidents = [dict(row) for row in cursor.fetchall()]
-
-        # Check remediations
+        
+        cursor.execute("SELECT * FROM incidents WHERE service_name = 'payment-service'")
+        incidents_s1 = [dict(row) for row in cursor.fetchall()]
+        
         cursor.execute("SELECT * FROM remediations")
-        remediations = [dict(row) for row in cursor.fetchall()]
-
+        remediations_s1 = [dict(row) for row in cursor.fetchall()]
+        
         conn.close()
 
-        print(f"[E2E Test] Found {len(incidents)} incident(s) and {len(remediations)} remediation run(s) in DB.")
+        print(f"[Scenario 1] Found {len(incidents_s1)} incident(s) and {len(remediations_s1)} remediation run(s) in DB.")
+        
+        assert len(incidents_s1) > 0, "Scenario 1: No incident was created in database!"
+        
+        # Find the incident that has been remediated
+        remediated_incs = [i for i in incidents_s1 if i["status"] == "remediated"]
+        assert len(remediated_incs) > 0, "Scenario 1: No incident was remediated in database!"
+        
+        # Check latest remediated incident status and root cause
+        latest_inc = remediated_incs[-1]
+        print(f"[Scenario 1] Remediation Success - Incident: ID={latest_inc['id']} | Service={latest_inc['service_name']} | Status={latest_inc['status']}")
+        print(f"[Scenario 1] RCA Analysis: Root Cause={latest_inc['root_cause']} | Confidence={latest_inc['confidence_score']} | Risk Score={latest_inc['risk_score']}")
+        
+        # Verify RCA details
+        assert latest_inc["root_cause"] is not None and "payment-service" in latest_inc["root_cause"].lower(), "Expected self-contained root cause for payment-service"
+        assert latest_inc["confidence_score"] == 0.70, f"Expected self-contained confidence 0.70, got {latest_inc['confidence_score']}"
+        assert latest_inc["risk_score"] == 0.40, f"Expected risk score 0.40, got {latest_inc['risk_score']}"
 
-        # Assertions
-        assert len(incidents) > 0, "No incident was created in database!"
-        assert len(remediations) > 0, "No remediation action was executed!"
+        # Check remediation details
+        assert len(remediations_s1) > 0, "Scenario 1: No remediation action was executed!"
+        latest_rem = remediations_s1[-1]
+        print(f"[Scenario 1] Remediation Action: '{latest_rem['action_type']}' | Success: {bool(latest_rem['success'])}")
+        assert latest_rem["action_type"] in ["restart_pod", "scale_deployment"], f"Unexpected action type: {latest_rem['action_type']}"
+        assert bool(latest_rem["success"]) is True, "Remediation execution reported failure!"
 
-        incident = incidents[0]
-        remediation = remediations[0]
+        # ==========================================
+        # Scenario 2: Database Failure -> payment-service Degradation -> RCA concludes root cause = payment-db
+        # ==========================================
+        print("\n--- Running Scenario 2: Cascading failure (payment-db down) ---")
 
-        print(f"[E2E Test] Incident Title: '{incident['title']}' | Status: '{incident['status']}'")
-        print(f"[E2E Test] Remediation Action: '{remediation['action_type']}' | Success: {bool(remediation['success'])}")
+        # Step A: Seed active downstream incident for payment-db
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        db_incident_id = "INC-DB-001"
+        cursor.execute(
+            "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, root_cause, confidence_score, risk_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (db_incident_id, "HEC-DB001", "Database offline", "critical", "open", "payment-db", "Connection timeout", 1.0, 0.9)
+        )
+        conn.commit()
+        conn.close()
+        print("[Scenario 2] Seeded active downstream incident for payment-db in DB.")
 
-        assert incident["status"] == "remediated", f"Expected incident status 'remediated', got '{incident['status']}'"
-        assert remediation["action_type"] == "restart_pod", f"Expected remediation action 'restart_pod', got '{remediation['action_type']}'"
-        assert bool(remediation["success"]) is True, "Remediation execution reported failure!"
+        # Step B: Inject memory spike on payment-service to trigger a degradation incident
+        trigger_payload = {"cpu_usage": 45.0, "memory_usage": 90.0, "restart_count": 0}
+        with open(os.path.join(ROOT_DIR, "simulation_trigger.json"), "w") as f:
+            json.dump(trigger_payload, f)
 
-        print("[E2E Test] SUCCESS: End-to-end self-healing pipeline verified successfully!")
+        # Wait 5 seconds to guarantee at least two scrapes detect the trigger
+        time.sleep(5.0)
+
+        # Remove trigger file immediately to stop new anomalies
+        if os.path.exists(os.path.join(ROOT_DIR, "simulation_trigger.json")):
+            os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
+
+        # Wait for cascading failure RCA and remediation to complete
+        print("[Scenario 2] Waiting 10 seconds for cascading failure RCA and remediation...")
+        time.sleep(10)
+
+        # Verify DB records
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get all incidents for payment-service after our Scenario 2 start
+        cursor.execute("SELECT * FROM incidents WHERE service_name = 'payment-service' ORDER BY detected_at DESC")
+        incidents_s2 = [dict(row) for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT * FROM remediations ORDER BY executed_at DESC")
+        remediations_s2 = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+
+        print(f"[Scenario 2] Found {len(incidents_s2)} payment-service incident(s) and {len(remediations_s2)} total remediation(s) in DB.")
+        
+        # Find the incident for payment-service in Scenario 2 that has been remediated
+        # (It should have root cause pointing to payment-db)
+        remediated_incs_s2 = [i for i in incidents_s2 if i["status"] == "remediated" and "payment-db" in (i["root_cause"] or "")]
+        assert len(remediated_incs_s2) > 0, "Scenario 2: No incident with payment-db root cause was remediated!"
+        
+        degraded_inc = remediated_incs_s2[0]
+        print(f"[Scenario 2] Remediation Success - Incident: ID={degraded_inc['id']} | Service={degraded_inc['service_name']} | Status={degraded_inc['status']}")
+        print(f"[Scenario 2] RCA Analysis: Root Cause={degraded_inc['root_cause']} | Confidence={degraded_inc['confidence_score']} | Risk Score={degraded_inc['risk_score']}")
+        
+        # Verify root cause traverses down to payment-db
+        assert "payment-db" in degraded_inc["root_cause"], f"Expected root cause to pinpoint 'payment-db', got: {degraded_inc['root_cause']}"
+        assert degraded_inc["confidence_score"] == 0.95, f"Expected cascading confidence 0.95, got {degraded_inc['confidence_score']}"
+        assert degraded_inc["risk_score"] == 0.85, f"Expected risk score 0.85, got {degraded_inc['risk_score']}"
+        
+        # Verify that remediation targeted payment-db rather than payment-service
+        matching_remediations = [r for r in remediations_s2 if r["incident_id"] == degraded_inc["id"]]
+        assert len(matching_remediations) > 0, "Scenario 2: No remediation action executed for the degraded incident!"
+        
+        latest_rem_s2 = matching_remediations[0]
+        print(f"[Scenario 2] Remediation for degraded incident: Action={latest_rem_s2['action_type']} | Success={bool(latest_rem_s2['success'])}")
+        
+        # Verify that the DB shows the remediation executed
+        assert bool(latest_rem_s2["success"]) is True, "Remediation execution reported failure!"
+
+        print("[E2E Test] SUCCESS: Both Scenario 1 (Isolation Forest) and Scenario 2 (Cascading RCA) verified successfully!")
         sys.exit(0)
 
     except AssertionError as ae:

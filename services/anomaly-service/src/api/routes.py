@@ -40,7 +40,7 @@ def run_anomaly_listener():
                 conn, use_pg = get_db_connection()
                 cursor = conn.cursor()
 
-                incident_id = f"INC-{int(time.time())}"
+                incident_id = f"INC-{uuid.uuid4().hex[:8].upper()}"
                 code = f"HEC-{uuid.uuid4().hex[:6].upper()}"
                 title = f"{anomaly.get('anomaly_type').replace('_', ' ').capitalize()} in {anomaly.get('service_name')}"
                 severity = "critical" if anomaly.get("anomaly_type") == "cpu_high" else "high"

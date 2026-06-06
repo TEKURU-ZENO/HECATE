@@ -42,7 +42,7 @@ class HecateEventBus:
 
     def _init_sqlite(self):
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS events (
@@ -52,6 +52,10 @@ class HecateEventBus:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except Exception:
+            pass
         conn.commit()
         conn.close()
 
@@ -70,8 +74,12 @@ class HecateEventBus:
                 self.use_kafka = False
 
         # SQLite publish
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except Exception:
+            pass
         cursor.execute("INSERT INTO events (topic, payload) VALUES (?, ?)", (topic, json.dumps(payload)))
         conn.commit()
         conn.close()
@@ -104,16 +112,24 @@ class HecateEventBus:
         log.info("event_bus.sqlite_subscriber_started", topics=topics, group_id=group_id)
 
         # Start reading from the end of the DB
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except Exception:
+            pass
         cursor.execute("SELECT MAX(id) FROM events")
         row = cursor.fetchone()
         last_id = row[0] if row[0] is not None else 0
         conn.close()
 
         while True:
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(DB_PATH, timeout=30.0)
             cursor = conn.cursor()
+            try:
+                conn.execute("PRAGMA journal_mode=WAL;")
+            except Exception:
+                pass
             cursor.execute(
                 "SELECT id, topic, payload FROM events WHERE id > ? ORDER BY id ASC",
                 (last_id,)

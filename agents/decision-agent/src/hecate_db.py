@@ -42,8 +42,12 @@ def get_db_connection():
 
     # SQLite Fallback
     os.makedirs(os.path.dirname(SQLITE_DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn = sqlite3.connect(SQLITE_DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+    except Exception:
+        pass
 
     cursor = conn.cursor()
     cursor.execute("""
@@ -65,11 +69,17 @@ def get_db_connection():
             service_name TEXT,
             root_cause TEXT,
             confidence_score REAL,
+            risk_score REAL,
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             resolved_at TIMESTAMP,
             recovery_time_seconds INTEGER
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN risk_score REAL")
+        conn.commit()
+    except Exception:
+        pass
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS remediations (
             id TEXT PRIMARY KEY,

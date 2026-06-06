@@ -171,6 +171,62 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ML INTELLIGENCE & RCA DIAGNOSTICS CARD */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-6 backdrop-blur-md md:col-span-2">
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+            <span className="text-xs font-semibold text-white/30 uppercase tracking-wider block">ML Detection & Root Cause Diagnostics</span>
+            <div className="flex gap-4 text-[10px] font-mono">
+              <span className="text-amber-400">Rule Alerts: {incidents.filter(i => !i.title.toLowerCase().includes("ml")).length}</span>
+              <span className="text-indigo-400">ML Detections: {incidents.filter(i => i.title.toLowerCase().includes("ml")).length}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* List of ML detections */}
+            <div className="space-y-3">
+              <span className="text-[11px] font-semibold text-white/50 block">Active Machine Learning Alerts</span>
+              {incidents.filter(i => i.title.toLowerCase().includes("ml")).length === 0 ? (
+                <div className="text-center py-6 text-xs text-white/20 border border-dashed border-white/5 rounded-lg">No ML anomalies detected in this cycle.</div>
+              ) : (
+                incidents.filter(i => i.title.toLowerCase().includes("ml")).slice(0, 3).map(inc => (
+                  <div key={inc.id} className="p-3 rounded-lg bg-indigo-950/20 border border-indigo-500/20 flex justify-between items-center">
+                    <div>
+                      <span className="text-xs font-bold text-indigo-400 block">Unsupervised Isolation Forest</span>
+                      <span className="text-[10px] text-white/60 font-mono mt-0.5 block">Target: {inc.service_name} · {inc.root_cause || "Analyzing dependencies..."}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/25 text-[9px] text-indigo-300 font-mono">ML ACTIVE</span>
+                  </div>
+                ))
+              )}
+            </div>
+            {/* Decoupled RCA Diagnostics Panel */}
+            <div className="space-y-3">
+              <span className="text-[11px] font-semibold text-white/50 block">Dependency Path Root Cause Diagnostics</span>
+              {incidents.filter(i => i.root_cause && i.root_cause.includes("caused by")).length === 0 ? (
+                <div className="text-center py-6 text-xs text-white/20 border border-dashed border-white/5 rounded-lg">No cascading failures diagnosed yet.</div>
+              ) : (
+                incidents.filter(i => i.root_cause && i.root_cause.includes("caused by")).slice(0, 3).map(inc => (
+                  <div key={inc.id} className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/20">
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-bold text-emerald-400">Cascading Failure Isolated</span>
+                      <span className="text-[10px] text-emerald-400/80 font-mono font-bold">Conf: {inc.confidence_score ? `${(inc.confidence_score * 100).toFixed(0)}%` : "N/A"}</span>
+                    </div>
+                    <p className="text-[10px] text-white/70 mt-1">{inc.root_cause}</p>
+                    {inc.risk_score !== undefined && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-[9px] text-white/40 uppercase">Risk Index:</span>
+                        <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-red-500" style={{ width: `${inc.risk_score * 100}%` }} />
+                        </div>
+                        <span className="text-[9px] text-red-400 font-mono">{inc.risk_score.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

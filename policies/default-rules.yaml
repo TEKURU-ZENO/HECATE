@@ -8,3 +8,14 @@ rules:
   restart_high:
     metric: restart_count
     threshold: 5
+
+topology:
+  services:
+    - gateway
+    - order-service
+    - payment-service
+    - payment-db
+  dependencies:
+    - [gateway, order-service]
+    - [order-service, payment-service]
+    - [payment-service, payment-db]

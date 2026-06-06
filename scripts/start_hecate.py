@@ -69,6 +69,7 @@ def main():
     agents = [
         {"name": "monitoring-agent", "path": "agents/monitoring-agent"},
         {"name": "detection-agent", "path": "agents/detection-agent"},
+        {"name": "rca-agent", "path": "agents/rca-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"}
     ]
