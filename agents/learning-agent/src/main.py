@@ -1,6 +1,8 @@
 """HECATE learning-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import LearningAgent
 from .config import settings
 

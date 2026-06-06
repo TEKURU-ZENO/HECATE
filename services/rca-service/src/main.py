@@ -1,10 +1,10 @@
 """HECATE rca-service — FastAPI Application entrypoint."""
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
+
 from .api.routes import router
-from .config import settings
-import structlog
 
 log = structlog.get_logger()
 

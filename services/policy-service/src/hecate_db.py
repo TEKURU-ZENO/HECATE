@@ -1,5 +1,6 @@
-import sqlite3
 import os
+import sqlite3
+
 import structlog
 
 log = structlog.get_logger()
@@ -14,14 +15,14 @@ def get_db_connection():
     # Attempt PostgreSQL connection
     use_pg = False
     conn = None
-    
+
     if os.environ.get("HECATE_DB_ENGINE") != "sqlite" and not _pg_disabled:
         pg_host = os.environ.get("POSTGRES_HOST", "localhost")
         pg_port = os.environ.get("POSTGRES_PORT", "5432")
         pg_db = os.environ.get("POSTGRES_DB", "hecate")
         pg_user = os.environ.get("POSTGRES_USER", "hecate")
         pg_password = os.environ.get("POSTGRES_PASSWORD", "changeme")
-        
+
         try:
             import psycopg2
             conn = psycopg2.connect(
@@ -38,12 +39,12 @@ def get_db_connection():
         except Exception as e:
             _pg_disabled = True
             log.warn("database.postgresql_failed_falling_back_to_sqlite", error=str(e), path=SQLITE_DB_PATH)
-        
+
     # SQLite Fallback
     os.makedirs(os.path.dirname(SQLITE_DB_PATH), exist_ok=True)
     conn = sqlite3.connect(SQLITE_DB_PATH)
     conn.row_factory = sqlite3.Row
-    
+
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -93,7 +94,7 @@ def get_db_connection():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     # Check if seed policies exist
     cursor.execute("SELECT COUNT(*) FROM policies")
     if cursor.fetchone()[0] == 0:
@@ -104,5 +105,5 @@ def get_db_connection():
             ('pol-002', 'Scale on high CPU', 'metric.cpu_usage > 90', 'scale_deployment', 'low', 1)
         """)
         conn.commit()
-        
+
     return conn, use_pg

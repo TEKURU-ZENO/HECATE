@@ -1,9 +1,9 @@
-import asyncio
-import structlog
-import uuid
 import time
+import uuid
+
 import httpx
-from .config import settings
+import structlog
+
 from .hecate_events import HecateEventBus
 
 log = structlog.get_logger()
@@ -13,11 +13,11 @@ class DecisionAgent:
         self.settings = settings
         self._running = False
         self.event_bus = HecateEventBus(kafka_servers=settings.kafka_bootstrap_servers)
-        
+
     async def run(self) -> None:
         self._running = True
         log.info("decision_agent.started")
-        
+
         for incident in self.event_bus.subscribe(["incident-topic"], group_id="decision-group"):
             if not self._running:
                 break
@@ -31,9 +31,9 @@ class DecisionAgent:
         title = incident.get("title")
         service_name = incident.get("service_name")
         namespace = incident.get("namespace")
-        
+
         log.info("decision_agent.resolving_policy", incident_id=incident_id, title=title)
-        
+
         # Query Policy Service API to fetch action mapping
         action = "restart_pod"
         policy_id = "pol-001"
@@ -41,7 +41,7 @@ class DecisionAgent:
             async with httpx.AsyncClient() as client:
                 # Query local Policy Service running on port 8002 (we will run services on consecutive ports locally)
                 res = await client.get(
-                    "http://localhost:8002/api/v1/policies/match", 
+                    "http://localhost:8002/api/v1/policies/match",
                     params={"incident_title": title},
                     timeout=2.0
                 )
@@ -66,7 +66,7 @@ class DecisionAgent:
                         policy_id = p.get("id")
             except Exception as dbe:
                 log.error("decision_agent.local_sqlite_query_failed", error=str(dbe))
-        
+
         # Build precise explicit Decision event payload
         decision_payload = {
             "id": str(uuid.uuid4()),
@@ -80,7 +80,7 @@ class DecisionAgent:
             "reason": f"Policy {policy_id} matched alert: {title}",
             "timestamp": time.time()
         }
-        
+
         log.info("decision_agent.remediation_decision_made", action=action, target=service_name)
         self.event_bus.publish("decision-topic", decision_payload)
 

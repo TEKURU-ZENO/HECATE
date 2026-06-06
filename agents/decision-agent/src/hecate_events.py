@@ -1,7 +1,8 @@
-import sqlite3
 import json
-import time
 import os
+import sqlite3
+import time
+
 import structlog
 
 log = structlog.get_logger()
@@ -18,11 +19,11 @@ class HecateEventBus:
         self.client_id = client_id
         self.use_kafka = False
         self.producer = None
-        
+
         if os.environ.get("HECATE_EVENT_ENGINE") == "sqlite" or _kafka_disabled:
             self._init_sqlite()
             return
-            
+
         # Try to connect to Kafka
         try:
             from kafka import KafkaProducer
@@ -67,7 +68,7 @@ class HecateEventBus:
                 log.warn("event_bus.kafka_publish_failed_falling_to_sqlite", error=str(e))
                 self._init_sqlite()
                 self.use_kafka = False
-        
+
         # SQLite publish
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -97,11 +98,11 @@ class HecateEventBus:
                 _kafka_disabled = True
                 log.warn("event_bus.kafka_subscribe_failed_falling_to_sqlite", error=str(e))
                 self.use_kafka = False
-        
+
         # SQLite subscribe loop
         self._init_sqlite()
         log.info("event_bus.sqlite_subscriber_started", topics=topics, group_id=group_id)
-        
+
         # Start reading from the end of the DB
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -109,17 +110,17 @@ class HecateEventBus:
         row = cursor.fetchone()
         last_id = row[0] if row[0] is not None else 0
         conn.close()
-        
+
         while True:
             conn = sqlite3.connect(DB_PATH)
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, topic, payload FROM events WHERE id > ? ORDER BY id ASC", 
+                "SELECT id, topic, payload FROM events WHERE id > ? ORDER BY id ASC",
                 (last_id,)
             )
             rows = cursor.fetchall()
             conn.close()
-            
+
             for row in rows:
                 event_id, topic, payload = row
                 last_id = event_id
@@ -128,5 +129,5 @@ class HecateEventBus:
                         yield json.loads(payload)
                     except Exception as e:
                         log.error("event_bus.sqlite_payload_parse_error", error=str(e))
-            
+
             time.sleep(0.5)

@@ -1,6 +1,8 @@
 """HECATE detection-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import DetectionAgent
 from .config import settings
 

@@ -1,15 +1,16 @@
 import os
 import sys
-import unittest
 import time
+import unittest
 import uuid
 
 # Add workspace root to python path to import helpers
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT_DIR)
 
-from hecate_events import HecateEventBus
 from hecate_db import get_db_connection
+from hecate_events import HecateEventBus
+
 
 class TestHecateMonorepo(unittest.TestCase):
 
@@ -24,14 +25,14 @@ class TestHecateMonorepo(unittest.TestCase):
         def delayed_publish():
             time.sleep(1.0)
             bus.publish(test_topic, test_payload)
-            
+
         t = threading.Thread(target=delayed_publish, daemon=True)
         t.start()
 
         # Subscribe and read with timeout
         received = []
         subscriber = bus.subscribe([test_topic], group_id="test-group")
-        
+
         # Run consumer in short loop
         start_time = time.time()
         for msg in subscriber:
@@ -48,16 +49,16 @@ class TestHecateMonorepo(unittest.TestCase):
         """Verify db connection helper initializes and accesses tables."""
         conn, use_pg = get_db_connection()
         self.assertIsNotNone(conn)
-        
+
         cursor = conn.cursor()
-        
+
         # Write a test incident
         inc_id = f"INC-TEST-{uuid.uuid4().hex[:6]}"
         title = "Test Incident"
         severity = "medium"
         status = "open"
         service_name = "test-service"
-        
+
         if use_pg:
             cursor.execute(
                 "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, detected_at) VALUES (%s, %s, %s, %s, %s, %s, NOW())",
@@ -68,16 +69,16 @@ class TestHecateMonorepo(unittest.TestCase):
                 "INSERT INTO incidents (id, incident_code, title, severity, status, service_name) VALUES (?, ?, ?, ?, ?, ?)",
                 (inc_id, inc_id, title, severity, status, service_name)
             )
-            
+
         conn.commit()
-        
+
         # Retrieve it
         cursor.execute("SELECT title, severity, status FROM incidents WHERE id = ?", (inc_id,))
         row = dict(cursor.fetchone())
         self.assertEqual(row["title"], "Test Incident")
         self.assertEqual(row["severity"], "medium")
         self.assertEqual(row["status"], "open")
-        
+
         # Clean up test entry
         cursor.execute("DELETE FROM incidents WHERE id = ?", (inc_id,))
         conn.commit()

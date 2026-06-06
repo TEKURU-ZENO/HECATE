@@ -2,11 +2,13 @@
 import asyncio
 import json
 import threading
+
+import structlog
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+
 from .hecate_db import get_db_connection
 from .hecate_events import HecateEventBus
-import structlog
 
 log = structlog.get_logger()
 
@@ -51,9 +53,9 @@ def start_ws_broadcaster():
                 # Add topic mapping to make it clear on the frontend
                 # Convert Event to socket payload
                 asyncio.run(manager.broadcast(event))
-            except Exception as e:
+            except Exception:
                 pass
-                
+
     t = threading.Thread(target=worker, daemon=True)
     t.start()
 

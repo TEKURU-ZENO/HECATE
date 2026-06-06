@@ -2,6 +2,7 @@ import pytest
 from src.agent import DecisionAgent
 from src.config import Settings
 
+
 @pytest.fixture
 def settings():
     return Settings(kafka_bootstrap_servers="localhost:9092")

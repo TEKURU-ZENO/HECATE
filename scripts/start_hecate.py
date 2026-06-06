@@ -1,8 +1,8 @@
 import os
-import sys
-import subprocess
-import time
 import signal
+import subprocess
+import sys
+import time
 
 # HECATE Monorepo process orchestrator
 
@@ -40,19 +40,19 @@ def main():
     def sig_handler(sig, frame):
         cleanup()
         sys.exit(0)
-    
+
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
     print("[Orchestrator] Starting HECATE Core platform services...")
-    
+
     # 1. Services configs
     services = [
         {"name": "dashboard-api", "path": "services/dashboard-api", "port": 8000},
         {"name": "anomaly-service", "path": "services/anomaly-service", "port": 8001},
         {"name": "policy-service", "path": "services/policy-service", "port": 8002}
     ]
-    
+
     for svc in services:
         print(f" -> Launching {svc['name']} on http://localhost:{svc['port']}")
         p = subprocess.Popen(
@@ -62,9 +62,9 @@ def main():
             stderr=subprocess.DEVNULL
         )
         processes.append(p)
-        
+
     time.sleep(2) # Allow services to initialize their DB states
-    
+
     print("[Orchestrator] Starting HECATE Operational Agents...")
     agents = [
         {"name": "monitoring-agent", "path": "agents/monitoring-agent"},
@@ -72,7 +72,7 @@ def main():
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"}
     ]
-    
+
     for ag in agents:
         print(f" -> Launching {ag['name']} operational loop")
         p = subprocess.Popen(
@@ -82,12 +82,12 @@ def main():
             stderr=subprocess.DEVNULL
         )
         processes.append(p)
-        
+
     print("[Orchestrator] HECATE platform is fully running locally.")
     print(" -> Frontend React URL: http://localhost:3000")
     print(" -> Main dashboard API: http://localhost:8000/docs")
     print("Press Ctrl+C to terminate the platform.")
-    
+
     while True:
         time.sleep(1)
 

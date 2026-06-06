@@ -1,10 +1,11 @@
 import asyncio
-import structlog
-import uuid
-import time
-import os
 import json
-from .config import settings
+import os
+import time
+import uuid
+
+import structlog
+
 from .hecate_events import HecateEventBus
 
 log = structlog.get_logger()
@@ -14,19 +15,19 @@ class MonitoringAgent:
         self.settings = settings
         self._running = False
         self.event_bus = HecateEventBus(kafka_servers=settings.kafka_bootstrap_servers)
-        
+
     async def run(self) -> None:
         self._running = True
         log.info("monitoring_agent.running", target_service=self.settings.target_service)
-        
+
         # Simulation cycle counter
         cycle = 0
-        
+
         while self._running:
             try:
                 cycle += 1
                 metrics = await self.scrape_metrics(cycle)
-                
+
                 # Publish raw metric event
                 event_payload = {
                     "event_id": str(uuid.uuid4()),
@@ -36,11 +37,11 @@ class MonitoringAgent:
                     "namespace": self.settings.target_namespace,
                     "metrics": metrics
                 }
-                
+
                 self.event_bus.publish("metrics-topic", event_payload)
             except Exception as e:
                 log.error("monitoring_agent.cycle_failed", error=str(e))
-                
+
             await asyncio.sleep(self.settings.scrape_interval_seconds)
 
     async def stop(self) -> None:
@@ -53,7 +54,7 @@ class MonitoringAgent:
         cpu = 45.0
         memory = 60.0
         restarts = 0
-        
+
         if os.path.exists(sim_trigger_path):
             try:
                 with open(sim_trigger_path, "r") as f:
@@ -75,7 +76,7 @@ class MonitoringAgent:
                 memory = 88.0
                 restarts = 6
                 log.info("monitoring_agent.simulating_oom_crash")
-                
+
         return {
             "cpu_usage": cpu,
             "memory_usage": memory,

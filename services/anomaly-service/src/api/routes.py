@@ -1,8 +1,10 @@
-from fastapi import APIRouter
-from ..hecate_db import get_db_connection
-import structlog
-import uuid
 import time
+import uuid
+
+import structlog
+from fastapi import APIRouter
+
+from ..hecate_db import get_db_connection
 
 router = APIRouter()
 log = structlog.get_logger()
@@ -25,9 +27,10 @@ async def get_anomalies():
 
 # Trigger method runs in background of service
 def run_anomaly_listener():
-    from ..hecate_events import HecateEventBus
     import threading
-    
+
+    from ..hecate_events import HecateEventBus
+
     def worker():
         log.info("anomaly_service.listener_started")
         bus = HecateEventBus()
@@ -36,13 +39,13 @@ def run_anomaly_listener():
                 # Add Incident record
                 conn, use_pg = get_db_connection()
                 cursor = conn.cursor()
-                
+
                 incident_id = f"INC-{int(time.time())}"
                 code = f"HEC-{uuid.uuid4().hex[:6].upper()}"
                 title = f"{anomaly.get('anomaly_type').replace('_', ' ').capitalize()} in {anomaly.get('service_name')}"
                 severity = "critical" if anomaly.get("anomaly_type") == "cpu_high" else "high"
                 status = "open"
-                
+
                 # Insert incident
                 if use_pg:
                     cursor.execute(
@@ -56,7 +59,7 @@ def run_anomaly_listener():
                     )
                 conn.commit()
                 conn.close()
-                
+
                 # Publish Incident event
                 incident_payload = {
                     "incident_id": incident_id,
@@ -70,9 +73,9 @@ def run_anomaly_listener():
                     "timestamp": time.time()
                 }
                 bus.publish("incident-topic", incident_payload)
-                
+
             except Exception as e:
                 log.error("anomaly_service.failed_to_log_incident", error=str(e))
-                
+
     t = threading.Thread(target=worker, daemon=True)
     t.start()

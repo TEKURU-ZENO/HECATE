@@ -1,6 +1,8 @@
 """HECATE remediation-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import RemediationAgent
 from .config import settings
 

@@ -1,6 +1,8 @@
 """HECATE decision-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import DecisionAgent
 from .config import settings
 

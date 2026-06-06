@@ -1,10 +1,10 @@
-import asyncio
-import structlog
-import uuid
-import time
 import os
+import time
+import uuid
+
+import structlog
 import yaml
-from .config import settings
+
 from .hecate_events import HecateEventBus
 
 log = structlog.get_logger()
@@ -15,7 +15,7 @@ class DetectionAgent:
         self._running = False
         self.event_bus = HecateEventBus(kafka_servers=settings.kafka_bootstrap_servers)
         self.rules = self._load_rules()
-        
+
     def _load_rules(self) -> dict:
         ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
         rules_path = os.path.join(ROOT_DIR, "policies", "default-rules.yaml")
@@ -27,7 +27,7 @@ class DetectionAgent:
                 return data.get("rules", {})
             except Exception as e:
                 log.error("detection_agent.rules_load_failed", error=str(e))
-        
+
         # Safe fallback
         log.warn("detection_agent.using_fallback_rules")
         return {
@@ -39,7 +39,7 @@ class DetectionAgent:
     async def run(self) -> None:
         self._running = True
         log.info("detection_agent.started")
-        
+
         # Subscribe to metrics-topic
         for event in self.event_bus.subscribe(["metrics-topic"], group_id="detection-group"):
             if not self._running:
@@ -53,12 +53,12 @@ class DetectionAgent:
         metrics = event.get("metrics", {})
         service_name = event.get("service_name")
         namespace = event.get("namespace")
-        
+
         for rule_name, rule in self.rules.items():
             metric_name = rule.get("metric")
             threshold = rule.get("threshold")
             current_value = metrics.get(metric_name, 0.0)
-            
+
             if current_value > threshold:
                 anomaly_id = str(uuid.uuid4())
                 anomaly_payload = {

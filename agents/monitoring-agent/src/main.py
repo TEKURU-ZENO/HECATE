@@ -1,6 +1,8 @@
 """HECATE monitoring-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import MonitoringAgent
 from .config import settings
 

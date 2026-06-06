@@ -16,6 +16,6 @@ jobs:
       - name: Install Lint Tools
         run: pip install ruff mypy pytest
       - name: Run Lint
-        run: ruff check .
+        run: ruff check . --config pyproject.toml
       - name: Run Tests
-        run: pytest
+        run: pytest tests/

@@ -1,6 +1,8 @@
 """HECATE rca-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import RcaAgent
 from .config import settings
 

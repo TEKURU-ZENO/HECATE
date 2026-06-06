@@ -1,9 +1,10 @@
 """HECATE Dashboard API backend."""
 import asyncio
 import json
+
+import structlog
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-import structlog
 
 log = structlog.get_logger()
 

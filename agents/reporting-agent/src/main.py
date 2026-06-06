@@ -1,6 +1,8 @@
 """HECATE reporting-agent entrypoint."""
 import asyncio
+
 import structlog
+
 from .agent import ReportingAgent
 from .config import settings
 
