@@ -3,11 +3,41 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT_DIR)
 
 from hecate_db import get_db_connection
+
+
+def wait_for_incidents_resolve(timeout=30):
+    print(f"[E2E Test] Waiting for all open incidents on payment-service to be resolved (timeout={timeout}s)...")
+    # First, wait up to 5s for the incident to be created (open_count > 0)
+    for _ in range(5):
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM incidents WHERE service_name = 'payment-service' AND status NOT IN ('remediated', 'closed', 'failed')")
+        open_count = cursor.fetchone()[0]
+        conn.close()
+        if open_count > 0:
+            break
+        time.sleep(1.0)
+    
+    # Now wait for it to be resolved
+    for _ in range(timeout):
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM incidents WHERE service_name = 'payment-service' AND status NOT IN ('remediated', 'closed', 'failed')")
+        open_count = cursor.fetchone()[0]
+        conn.close()
+        if open_count == 0:
+            time.sleep(2.0)  # Small buffer for learning-agent to finish writing operational memory
+            print("[E2E Test] All incidents resolved.")
+            return True
+        time.sleep(1.0)
+    print("[E2E Test] WARNING: Timeout reached, some incidents are still open.")
+    return False
 
 
 def main():
@@ -60,6 +90,7 @@ def main():
         {"name": "monitoring-agent", "path": "agents/monitoring-agent"},
         {"name": "detection-agent", "path": "agents/detection-agent"},
         {"name": "rca-agent", "path": "agents/rca-agent"},
+        {"name": "recommendation-agent", "path": "agents/recommendation-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
         {"name": "learning-agent", "path": "agents/learning-agent"}
@@ -75,7 +106,7 @@ def main():
         )
         processes.append(p)
 
-    time.sleep(5)  # Wait for agent subscription loops to start
+    time.sleep(35)  # Wait for agent subscription loops to start (allowing ML model load in detection agent)
 
     try:
         # ==========================================
@@ -96,8 +127,7 @@ def main():
             os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
 
         # Wait for the pipeline to execute the existing incident
-        print("[Scenario 1] Waiting 10 seconds for self-healing loop execution...")
-        time.sleep(10)
+        wait_for_incidents_resolve(30)
 
         # Verify DB records
         conn, _ = get_db_connection()
@@ -166,8 +196,7 @@ def main():
             os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
 
         # Wait for cascading failure RCA and remediation to complete
-        print("[Scenario 2] Waiting 10 seconds for cascading failure RCA and remediation...")
-        time.sleep(10)
+        wait_for_incidents_resolve(30)
 
         # Verify DB records
         conn, _ = get_db_connection()
@@ -251,8 +280,7 @@ def main():
             os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
 
         # Wait for loop execution
-        print("[Scenario 4] Waiting 10 seconds for self-healing loop execution...")
-        time.sleep(10)
+        wait_for_incidents_resolve(45)
 
         # Verify DB records
         conn, _ = get_db_connection()
@@ -280,7 +308,166 @@ def main():
         assert len(cpu_mem_records) >= 2, f"Scenario 4: Expected at least 2 CPU records in operational memory, got: {len(cpu_mem_records)}"
         print("[Scenario 4] Double trigger verified successfully.")
 
-        print("[E2E Test] SUCCESS: All 4 Scenarios (1: Anomaly detection, 2: RCA, 3: Learning Memory, 4: Double Trigger stats) verified successfully!")
+        # ==========================================
+        # Scenario 5: Similarity Recommendation
+        # ==========================================
+        print("\n--- Running Scenario 5: Similarity Recommendation ---")
+        
+        # 1. Clear operational memory and recommendations to make it deterministic
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM operational_memory")
+        cursor.execute("DELETE FROM recommendations")
+        cursor.execute("UPDATE incidents SET status = 'remediated'")
+        
+        # Seed memory: 3 successes for restart_pod, 1 failure for scale_deployment on cpu_high / payment-service
+        # For restart_pod (3 successes, effectiveness=1.0, confidence=0.7)
+        for i in range(3):
+            cursor.execute(
+                """
+                INSERT INTO operational_memory (
+                    id, incident_id, incident_type, incident_title, root_cause_service,
+                    remediation_action, success, recovery_time_seconds, confidence_score, effectiveness_score
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    f"mem-s5-restart-{i}", f"inc-s5-restart-{i}", "cpu_high", "Cpu usage high in payment-service", "payment-service",
+                    "restart_pod", 1, 15, 0.70, 1.0
+                )
+            )
+        
+        # For scale_deployment (1 failure, effectiveness=0.0, confidence=0.7)
+        cursor.execute(
+            """
+            INSERT INTO operational_memory (
+                id, incident_id, incident_type, incident_title, root_cause_service,
+                remediation_action, success, recovery_time_seconds, confidence_score, effectiveness_score
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "mem-s5-scale-0", "inc-s5-scale-0", "cpu_high", "Cpu usage high in payment-service", "payment-service",
+                "scale_deployment", 0, 120, 0.70, 0.0
+            )
+        )
+        conn.commit()
+        conn.close()
+        print("[Scenario 5] Seeded 4 records in operational_memory table.")
+
+        # 2. Trigger CPU spike on payment-service
+        trigger_payload = {"cpu_usage": 95.0, "memory_usage": 60.0, "restart_count": 0}
+        with open(os.path.join(ROOT_DIR, "simulation_trigger.json"), "w") as f:
+            json.dump(trigger_payload, f)
+
+        time.sleep(5.0)
+
+        if os.path.exists(os.path.join(ROOT_DIR, "simulation_trigger.json")):
+            os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
+
+        # Wait for recommendation to be generated
+        print("[Scenario 5] Waiting for recommendation to be generated...")
+        rec = None
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM recommendations 
+                WHERE incident_type = 'cpu_high' AND root_cause_service = 'payment-service'
+                ORDER BY created_at DESC LIMIT 1
+                """
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row is not None:
+                rec = dict(row)
+                break
+            time.sleep(1.0)
+
+        assert rec is not None, "Scenario 5: No recommendation found in recommendations table!"
+        rec = dict(row)
+        print(
+            f"[Scenario 5] Found recommendation: Action={rec['recommended_action']} | "
+            f"Prob={rec['success_probability']} | Score={rec['recommendation_score']} | "
+            f"Tier={rec['match_tier']} | Cases={rec['similar_cases_count']}"
+        )
+        assert rec["recommended_action"] == "restart_pod", f"Expected restart_pod, got {rec['recommended_action']}"
+        assert rec["success_probability"] == 1.0, f"Expected success_probability 1.0, got {rec['success_probability']}"
+        assert rec["match_tier"] == 1, f"Expected match_tier 1, got {rec['match_tier']}"
+        assert rec["similar_cases_count"] == 4, f"Expected 4 similar cases, got {rec['similar_cases_count']}"
+        print("[Scenario 5] Similarity recommendation verified successfully.")
+
+        # ==========================================
+        # Scenario 6: Cold-Start Default Fallback
+        # ==========================================
+        print("\n--- Running Scenario 6: Cold-Start Default Fallback ---")
+        
+        # Wait for trailing events from Scenario 5 to settle
+        time.sleep(5.0)
+        
+        # 1. Clear operational memory and recommendations to ensure cold start
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM operational_memory")
+        cursor.execute("DELETE FROM recommendations")
+        cursor.execute("UPDATE incidents SET status = 'remediated'")
+        conn.commit()
+        conn.close()
+        print("[Scenario 6] Cleared operational_memory, recommendations and set incidents status to remediated.")
+
+        # 2. Publish a custom metrics event to metrics-topic to simulate memory_high on order-service
+        # (This avoids running another monitoring agent specifically for order-service)
+        from hecate_events import HecateEventBus
+        bus = HecateEventBus()
+        event_payload = {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "telemetry.metric",
+            "timestamp": time.time(),
+            "service_name": "order-service",
+            "namespace": "hecate-system",
+            "metrics": {
+                "cpu_usage": 45.0,
+                "memory_usage": 95.0,  # exceeds 85 threshold
+                "restart_count": 0
+            }
+        }
+        bus.publish("metrics-topic", event_payload)
+        print("[Scenario 6] Published custom metric event for order-service (memory_usage=95.0).")
+
+        # Wait for recommendation to be generated
+        print("[Scenario 6] Waiting for recommendation to be generated...")
+        rec_s6 = None
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM recommendations 
+                WHERE root_cause_service = 'order-service'
+                ORDER BY created_at DESC LIMIT 1
+                """
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row is not None:
+                rec_s6 = dict(row)
+                break
+            time.sleep(1.0)
+
+        assert rec_s6 is not None, "Scenario 6: No recommendation found for order-service!"
+        rec_s6 = dict(row)
+        print(
+            f"[Scenario 6] Found recommendation: Action={rec_s6['recommended_action']} | "
+            f"Prob={rec_s6['success_probability']} | Tier={rec_s6['match_tier']} | "
+            f"Cases={rec_s6['similar_cases_count']}"
+        )
+        # Match Tier must be 3 because there was no historical memory matching order-service or memory_high
+        assert rec_s6["match_tier"] == 3, f"Expected match_tier 3 (Policy fallback), got {rec_s6['match_tier']}"
+        assert rec_s6["similar_cases_count"] == 0, f"Expected 0 similar cases, got {rec_s6['similar_cases_count']}"
+        # Recommended action should follow policy default (which is restart_pod for memory)
+        assert rec_s6["recommended_action"] == "restart_pod", f"Expected recommended_action restart_pod, got {rec_s6['recommended_action']}"
+        print("[Scenario 6] Cold-start fallback verified successfully.")
+
+        print("[E2E Test] SUCCESS: All 6 Scenarios (1: Anomaly detection, 2: RCA, 3: Learning Memory, 4: Double Trigger stats, 5: Similarity Recommendation, 6: Cold-Start Fallback) verified successfully!")
         sys.exit(0)
 
     except AssertionError as ae:

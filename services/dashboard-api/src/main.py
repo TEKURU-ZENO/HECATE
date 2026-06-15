@@ -48,7 +48,7 @@ def start_ws_broadcaster():
     def worker():
         bus = HecateEventBus()
         # Listen to all topics and broadcast
-        for event in bus.subscribe(["metrics-topic", "anomaly-topic", "incident-topic", "decision-topic", "remediation-topic", "learning-topic"], group_id="ws-group"):
+        for event in bus.subscribe(["metrics-topic", "anomaly-topic", "incident-topic", "decision-topic", "remediation-topic", "learning-topic", "recommendation-topic"], group_id="ws-group"):
             try:
                 # Add topic mapping to make it clear on the frontend
                 # Convert Event to socket payload
@@ -89,10 +89,22 @@ async def get_agents():
     return [
         {"id": "agent-001", "agentName": "monitoring-agent", "version": "0.1.0", "status": "active", "healthScore": 98},
         {"id": "agent-002", "agentName": "detection-agent", "version": "0.1.0", "status": "active", "healthScore": 96},
-        {"id": "agent-003", "agentName": "decision-agent", "version": "0.1.0", "status": "active", "healthScore": 94},
-        {"id": "agent-004", "agentName": "remediation-agent", "version": "0.1.0", "status": "active", "healthScore": 97},
-        {"id": "agent-005", "agentName": "learning-agent", "version": "0.1.0", "status": "active", "healthScore": 99}
+        {"id": "agent-003", "agentName": "rca-agent", "version": "0.1.0", "status": "active", "healthScore": 95},
+        {"id": "agent-004", "agentName": "recommendation-agent", "version": "0.1.0", "status": "active", "healthScore": 94},
+        {"id": "agent-005", "agentName": "decision-agent", "version": "0.1.0", "status": "active", "healthScore": 94},
+        {"id": "agent-006", "agentName": "remediation-agent", "version": "0.1.0", "status": "active", "healthScore": 97},
+        {"id": "agent-007", "agentName": "learning-agent", "version": "0.1.0", "status": "active", "healthScore": 99}
     ]
+
+@app.get("/api/v1/recommendations")
+async def get_recommendations():
+    conn, _ = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM recommendations ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    res = [dict(row) for row in rows]
+    conn.close()
+    return res
 
 @app.get("/api/v1/learning/feedback")
 async def get_learning_feedback():

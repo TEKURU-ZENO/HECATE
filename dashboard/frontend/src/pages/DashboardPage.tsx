@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Activity, Clock, Server, CheckCircle2, AlertTriangle, XCircle, Power } from 'lucide-react';
+import { Shield, Activity, Clock, Server, CheckCircle2, AlertTriangle, XCircle, Power, Brain, Sparkles, Lightbulb } from 'lucide-react';
 import { SeverityBadge, StatusBadge } from '@/components/Badge';
 import { formatTimestamp } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [agents, setAgents] = useState<any[]>([]);
   const [systemHealth, setSystemHealth] = useState<'Healthy' | 'Warning' | 'Critical'>('Healthy');
   const [learningFeedback, setLearningFeedback] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [learningStats, setLearningStats] = useState<any>({
     total_incidents: 0,
     avg_recovery_time: 0.0,
@@ -44,6 +45,9 @@ export default function DashboardPage() {
 
       const feedbackRes = await fetch('http://localhost:8000/api/v1/learning/feedback');
       if (feedbackRes.ok) setLearningFeedback(await feedbackRes.json());
+
+      const recsRes = await fetch('http://localhost:8000/api/v1/recommendations');
+      if (recsRes.ok) setRecommendations(await recsRes.json());
 
       const statsRes = await fetch('http://localhost:8000/api/v1/learning/stats');
       if (statsRes.ok) setLearningStats(await statsRes.json());
@@ -238,6 +242,90 @@ export default function DashboardPage() {
                 ))
               )}
             </div>
+          </div>
+        </div>
+
+        {/* RELIABILITY INTELLIGENCE & RECOMMENDATIONS CARD */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-6 backdrop-blur-md md:col-span-2">
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+            <div className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-indigo-400 animate-pulse" />
+              <span className="text-xs font-semibold text-white/30 uppercase tracking-wider block">Reliability Intelligence & Recommendations</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/25 text-[10px] text-indigo-300 font-mono font-bold flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-indigo-400 animate-pulse" />
+              AI RECOMMENDATION ENGINE
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            <span className="text-[11px] font-semibold text-white/50 block">Active Recommendations & Playbook Scoring</span>
+            {recommendations.length === 0 ? (
+              <div className="text-center py-8 text-xs text-white/20 border border-dashed border-white/5 rounded-lg">No playbook recommendations generated yet.</div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {recommendations.slice(0, 3).map((rec) => {
+                  const scorePercent = rec.recommendation_score * 100;
+                  const probPercent = rec.success_probability * 100;
+                  const tierNames: { [key: number]: string } = {
+                    1: 'Tier 1: Exact Match (High Similarity)',
+                    2: 'Tier 2: Partial Match (Cross-Service)',
+                    3: 'Tier 3: Policy Fallback (Cold Start)'
+                  };
+                  const tierColors: { [key: number]: string } = {
+                    1: 'text-indigo-400 border-indigo-500/20 bg-indigo-500/10',
+                    2: 'text-cyan-400 border-cyan-500/20 bg-cyan-500/10',
+                    3: 'text-amber-400 border-amber-500/20 bg-amber-500/10'
+                  };
+                  return (
+                    <div key={rec.id} className="p-4 rounded-lg bg-black/20 border border-white/5 hover:border-white/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 font-mono text-[11px]">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded border text-[9px] font-bold ${tierColors[rec.match_tier] || 'text-white border-white/10 bg-white/5'}`}>
+                            {tierNames[rec.match_tier] || `Tier ${rec.match_tier}`}
+                          </span>
+                          <span className="text-white/40">·</span>
+                          <span className="text-white font-bold">{rec.incident_type}</span>
+                          <span className="text-white/40">on</span>
+                          <span className="text-white/80 font-bold">{rec.root_cause_service}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-white/60">
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Recommended Action:</span>
+                          <span className="text-white font-bold capitalize bg-white/5 px-2 py-0.5 rounded">{rec.recommended_action.replace('_', ' ')}</span>
+                          {rec.similar_cases_count > 0 && (
+                            <span className="text-white/35">({rec.similar_cases_count} historical cases)</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-6 border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-white/40 uppercase">Success Probability</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="font-bold text-white">{probPercent.toFixed(0)}%</span>
+                            <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-green-500" style={{ width: `${probPercent}%` }} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-white/40 uppercase">Engine Score</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="font-bold text-indigo-400">{rec.recommendation_score.toFixed(2)}</span>
+                            <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-500" style={{ width: `${scorePercent}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

@@ -70,6 +70,7 @@ def main():
         {"name": "monitoring-agent", "path": "agents/monitoring-agent"},
         {"name": "detection-agent", "path": "agents/detection-agent"},
         {"name": "rca-agent", "path": "agents/rca-agent"},
+        {"name": "recommendation-agent", "path": "agents/recommendation-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
         {"name": "learning-agent", "path": "agents/learning-agent"}

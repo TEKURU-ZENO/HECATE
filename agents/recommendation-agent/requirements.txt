@@ -1,0 +1,5 @@
+structlog
+pydantic-settings
+pydantic
+httpx
+pyyaml

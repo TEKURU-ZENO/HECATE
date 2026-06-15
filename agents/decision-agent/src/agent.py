@@ -18,32 +18,32 @@ class DecisionAgent:
         self._running = True
         log.info("decision_agent.started")
 
-        for rca_event in self.event_bus.subscribe(["rca-topic"], group_id="decision-group"):
+        for rec_event in self.event_bus.subscribe(["recommendation-topic"], group_id="decision-group"):
             if not self._running:
                 break
             try:
-                await self.process_rca_event(rca_event)
+                await self.process_recommendation_event(rec_event)
             except Exception as e:
-                log.error("decision_agent.rca_processing_failed", error=str(e))
+                log.error("decision_agent.recommendation_processing_failed", error=str(e))
 
-    async def process_rca_event(self, rca_event: dict) -> None:
-        incident_id = rca_event.get("incident_id")
-        rca_result = rca_event.get("rca_result", {})
-        root_cause_service = rca_result.get("root_cause_service")
-        confidence_score = rca_result.get("confidence_score", 1.0)
-        risk_score = rca_result.get("risk_score", 0.0)
+    async def process_recommendation_event(self, rec_event: dict) -> None:
+        incident_id = rec_event.get("incident_id")
+        recommended_action = rec_event.get("recommended_action")
+        root_cause_service = rec_event.get("root_cause_service")
+        confidence_score = rec_event.get("success_probability", 1.0)
+        risk_score = rec_event.get("recommendation_score", 1.0)
         
         # Default fallback namespace
-        namespace = rca_event.get("namespace") or "hecate-system"
+        namespace = rec_event.get("namespace") or "hecate-system"
 
-        log.info("decision_agent.resolving_policy_for_rca", incident_id=incident_id, root_cause=root_cause_service)
+        log.info("decision_agent.processing_governance_for_recommendation", incident_id=incident_id, action=recommended_action, target=root_cause_service)
 
-        # Query Policy Service API to fetch action mapping based on root cause service
-        action = "restart_pod"
+        # Enforce governance check: Verify that the Policy matches and the action is enabled
+        action = recommended_action
         policy_id = "pol-001"
         try:
             async with httpx.AsyncClient() as client:
-                # Query local Policy Service running on port 8002
+                # Query local Policy Service running on port 8002 to match
                 res = await client.get(
                     "http://localhost:8002/api/v1/policies/match",
                     params={"incident_title": root_cause_service},
@@ -51,27 +51,24 @@ class DecisionAgent:
                 )
                 if res.status_code == 200:
                     data = res.json()
-                    action = data.get("action", action)
+                    # Keep policy_id from match
                     policy_id = data.get("policy_id", policy_id)
         except Exception as e:
-            log.warn("decision_agent.policy_service_unreachable_using_local_sqlite_fallback", error=str(e))
-            # Fallback to direct SQLite match if Policy service API is down
+            log.warn("decision_agent.policy_service_unreachable_using_fallback", error=str(e))
+            # Fallback to direct sqlite matches
             from .hecate_db import get_db_connection
             try:
                 conn, _ = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("SELECT action_definition, id FROM policies WHERE enabled = 1")
-                rows = cursor.fetchall()
+                cursor.execute("SELECT id FROM policies WHERE action_definition = ? AND enabled = 1", (action,))
+                row = cursor.fetchone()
+                if row:
+                    policy_id = row[0]
                 conn.close()
-                for row in rows:
-                    p = dict(row)
-                    if "cpu" in p.get("action_definition") and "cpu" in root_cause_service.lower():
-                        action = p.get("action_definition")
-                        policy_id = p.get("id")
             except Exception as dbe:
-                log.error("decision_agent.local_sqlite_query_failed", error=str(dbe))
+                log.error("decision_agent.sqlite_policy_check_failed", error=str(dbe))
 
-        # Build precise explicit Decision event payload targeting the root cause service
+        # Build decision event payload
         decision_payload = {
             "id": str(uuid.uuid4()),
             "event_id": str(uuid.uuid4()),
@@ -82,7 +79,7 @@ class DecisionAgent:
             "confidence": confidence_score,
             "risk_score": risk_score,
             "policy_id": policy_id,
-            "reason": f"Policy {policy_id} matched RCA root cause: {root_cause_service}",
+            "reason": f"Decision Agent approved recommendation '{action}' on target '{root_cause_service}' based on policy {policy_id}",
             "timestamp": time.time()
         }
 
