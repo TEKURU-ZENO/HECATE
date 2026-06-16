@@ -1,4 +1,5 @@
 """HECATE rca-service — FastAPI Application entrypoint."""
+
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,9 +27,11 @@ app.add_middleware(
 Instrumentator().instrument(app).expose(app)
 app.include_router(router, prefix="/api/v1")
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "rca-service", "version": "0.1.0"}
+
 
 @app.on_event("startup")
 async def startup_event():

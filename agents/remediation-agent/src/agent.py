@@ -9,6 +9,7 @@ from .hecate_events import HecateEventBus
 
 log = structlog.get_logger()
 
+
 class RemediationAgent:
     def __init__(self, settings) -> None:
         self.settings = settings
@@ -33,14 +34,20 @@ class RemediationAgent:
         target = decision.get("target")
         namespace = decision.get("namespace")
 
-        log.info("remediation_agent.received_decision", action=action, target=target, namespace=namespace)
+        log.info(
+            "remediation_agent.received_decision", action=action, target=target, namespace=namespace
+        )
 
         # 1. Action Validator (Governance Gate)
         is_valid = self.validate_action(action, target, namespace)
         if not is_valid:
-            log.error("remediation_agent.governance_gate_rejected_action", action=action, target=target)
+            log.error(
+                "remediation_agent.governance_gate_rejected_action", action=action, target=target
+            )
             # Record failed outcome
-            self.record_remediation_outcome(incident_id, action, False, "Rejected by Action Validator")
+            self.record_remediation_outcome(
+                incident_id, action, False, "Rejected by Action Validator"
+            )
             return
 
         # 2. Execute Action (K8s API client call)
@@ -73,7 +80,7 @@ class RemediationAgent:
             "success": success,
             "execution_duration_ms": duration_ms,
             "error_message": err_msg,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         self.event_bus.publish("remediation-topic", outcome_payload)
 
@@ -103,6 +110,7 @@ class RemediationAgent:
         # K8s Client In-Cluster execution check
         try:
             from kubernetes import client, config
+
             try:
                 config.load_incluster_config()
             except:
@@ -136,7 +144,9 @@ class RemediationAgent:
             log.info("k8s.simulated_execution_succeeded", action=action, target=target)
             return True
 
-    def record_remediation_outcome(self, incident_id: str, action: str, success: bool, error_msg: str, duration_ms: int = 0):
+    def record_remediation_outcome(
+        self, incident_id: str, action: str, success: bool, error_msg: str, duration_ms: int = 0
+    ):
         try:
             conn, use_pg = get_db_connection()
             cursor = conn.cursor()
@@ -144,12 +154,30 @@ class RemediationAgent:
             if use_pg:
                 cursor.execute(
                     "INSERT INTO remediations (id, incident_id, action_type, status, success, execution_duration_ms, error_message, outcome_summary) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                    (rem_id, incident_id, action, "completed" if success else "failed", success, duration_ms, error_msg, f"Remediation action {action} completed.")
+                    (
+                        rem_id,
+                        incident_id,
+                        action,
+                        "completed" if success else "failed",
+                        success,
+                        duration_ms,
+                        error_msg,
+                        f"Remediation action {action} completed.",
+                    ),
                 )
             else:
                 cursor.execute(
                     "INSERT INTO remediations (id, incident_id, action_type, status, success, execution_duration_ms, error_message, outcome_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (rem_id, incident_id, action, "completed" if success else "failed", 1 if success else 0, duration_ms, error_msg, f"Remediation action {action} completed.")
+                    (
+                        rem_id,
+                        incident_id,
+                        action,
+                        "completed" if success else "failed",
+                        1 if success else 0,
+                        duration_ms,
+                        error_msg,
+                        f"Remediation action {action} completed.",
+                    ),
                 )
             conn.commit()
             conn.close()
@@ -161,12 +189,20 @@ class RemediationAgent:
             conn, use_pg = get_db_connection()
             cursor = conn.cursor()
             if use_pg:
-                cursor.execute("UPDATE incidents SET status = %s, resolved_at = NOW() WHERE id = %s", (status, incident_id))
+                cursor.execute(
+                    "UPDATE incidents SET status = %s, resolved_at = NOW() WHERE id = %s",
+                    (status, incident_id),
+                )
             else:
-                cursor.execute("UPDATE incidents SET status = ?, resolved_at = datetime('now') WHERE id = ?", (status, incident_id))
+                cursor.execute(
+                    "UPDATE incidents SET status = ?, resolved_at = datetime('now') WHERE id = ?",
+                    (status, incident_id),
+                )
             conn.commit()
             conn.close()
-            log.info("remediation_agent.incident_status_updated", status=status, incident_id=incident_id)
+            log.info(
+                "remediation_agent.incident_status_updated", status=status, incident_id=incident_id
+            )
         except Exception as e:
             log.error("remediation_agent.incident_update_failed", error=str(e))
 

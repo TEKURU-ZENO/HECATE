@@ -9,6 +9,7 @@ import time
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 processes = []
 
+
 def cleanup():
     print("\\n[Orchestrator] Stopping all HECATE services and agents...")
     for p in processes:
@@ -22,11 +23,12 @@ def cleanup():
                 pass
     print("[Orchestrator] Stopped.")
 
+
 def main():
     # Clean previous local DB caches to start fresh
     db_paths = [
         os.path.join(ROOT_DIR, "hecate_db.sqlite"),
-        os.path.join(ROOT_DIR, "hecate_events.db")
+        os.path.join(ROOT_DIR, "hecate_events.db"),
     ]
     for db in db_paths:
         if os.path.exists(db):
@@ -50,7 +52,7 @@ def main():
     services = [
         {"name": "dashboard-api", "path": "services/dashboard-api", "port": 8000},
         {"name": "anomaly-service", "path": "services/anomaly-service", "port": 8001},
-        {"name": "policy-service", "path": "services/policy-service", "port": 8002}
+        {"name": "policy-service", "path": "services/policy-service", "port": 8002},
     ]
 
     for svc in services:
@@ -59,11 +61,11 @@ def main():
             [sys.executable, "-m", "uvicorn", "src.main:app", "--port", str(svc["port"])],
             cwd=os.path.join(ROOT_DIR, svc["path"]),
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
         processes.append(p)
 
-    time.sleep(2) # Allow services to initialize their DB states
+    time.sleep(2)  # Allow services to initialize their DB states
 
     print("[Orchestrator] Starting HECATE Operational Agents...")
     agents = [
@@ -73,7 +75,7 @@ def main():
         {"name": "recommendation-agent", "path": "agents/recommendation-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
-        {"name": "learning-agent", "path": "agents/learning-agent"}
+        {"name": "learning-agent", "path": "agents/learning-agent"},
     ]
 
     for ag in agents:
@@ -82,7 +84,7 @@ def main():
             [sys.executable, "-m", "src.main"],
             cwd=os.path.join(ROOT_DIR, ag["path"]),
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
         processes.append(p)
 
@@ -93,6 +95,7 @@ def main():
 
     while True:
         time.sleep(1)
+
 
 if __name__ == "__main__":
     main()

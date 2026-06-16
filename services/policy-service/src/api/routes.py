@@ -6,6 +6,7 @@ from ..hecate_db import get_db_connection
 router = APIRouter()
 log = structlog.get_logger()
 
+
 @router.get("/policies")
 async def get_policies():
     conn, use_pg = get_db_connection()
@@ -15,6 +16,7 @@ async def get_policies():
     res = [dict(row) for row in rows]
     conn.close()
     return res
+
 
 @router.get("/policies/match")
 async def match_policy(incident_title: str):

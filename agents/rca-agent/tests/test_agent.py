@@ -7,9 +7,11 @@ from src.config import Settings
 def settings():
     return Settings(kafka_bootstrap_servers="localhost:9092")
 
+
 @pytest.fixture
 def agent(settings):
     return RcaAgent(settings)
+
 
 class TestRcaAgent:
     def test_initialization(self, agent):

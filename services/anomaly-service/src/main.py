@@ -17,9 +17,11 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api/v1")
 
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
 
 @app.on_event("startup")
 async def startup():

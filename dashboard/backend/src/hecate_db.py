@@ -10,6 +10,7 @@ SQLITE_DB_PATH = r"c:\Users\Dev Mehta\Desktop\HECATE\hecate_db.sqlite"
 
 _pg_disabled = False
 
+
 def get_db_connection():
     global _pg_disabled
     # Attempt PostgreSQL connection
@@ -25,20 +26,25 @@ def get_db_connection():
 
         try:
             import psycopg2
+
             conn = psycopg2.connect(
                 host=pg_host,
                 port=pg_port,
                 database=pg_db,
                 user=pg_user,
                 password=pg_password,
-                connect_timeout=1
+                connect_timeout=1,
             )
             use_pg = True
             log.info("database.connected_to_postgresql", host=pg_host, db=pg_db)
             return conn, use_pg
         except Exception as e:
             _pg_disabled = True
-            log.warn("database.postgresql_failed_falling_back_to_sqlite", error=str(e), path=SQLITE_DB_PATH)
+            log.warn(
+                "database.postgresql_failed_falling_back_to_sqlite",
+                error=str(e),
+                path=SQLITE_DB_PATH,
+            )
 
     # SQLite Fallback
     os.makedirs(os.path.dirname(SQLITE_DB_PATH), exist_ok=True)

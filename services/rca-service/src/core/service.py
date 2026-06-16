@@ -2,8 +2,10 @@ import structlog
 
 log = structlog.get_logger()
 
+
 class CoreService:
     """Business logic helper for rca-service"""
+
     def __init__(self) -> None:
         pass
 

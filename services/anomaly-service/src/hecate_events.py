@@ -12,6 +12,7 @@ DB_PATH = r"c:\Users\Dev Mehta\Desktop\HECATE\hecate_events.db"
 
 _kafka_disabled = False
 
+
 class HecateEventBus:
     def __init__(self, kafka_servers="localhost:9094", client_id="hecate-client"):
         global _kafka_disabled
@@ -27,17 +28,22 @@ class HecateEventBus:
         # Try to connect to Kafka
         try:
             from kafka import KafkaProducer
+
             self.producer = KafkaProducer(
                 bootstrap_servers=kafka_servers,
-                value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                 request_timeout_ms=1000,
-                max_block_ms=1000
+                max_block_ms=1000,
             )
             self.use_kafka = True
             log.info("event_bus.connected_to_kafka", servers=kafka_servers)
         except Exception as e:
             _kafka_disabled = True
-            log.warn("event_bus.kafka_connection_failed_falling_back_to_sqlite", error=str(e), db_path=DB_PATH)
+            log.warn(
+                "event_bus.kafka_connection_failed_falling_back_to_sqlite",
+                error=str(e),
+                db_path=DB_PATH,
+            )
             self._init_sqlite()
 
     def _init_sqlite(self):
@@ -65,7 +71,11 @@ class HecateEventBus:
             try:
                 self.producer.send(topic, payload)
                 self.producer.flush()
-                log.info("event_bus.published_to_kafka", topic=topic, evt_id=payload.get("event_id") or payload.get("id"))
+                log.info(
+                    "event_bus.published_to_kafka",
+                    topic=topic,
+                    evt_id=payload.get("event_id") or payload.get("id"),
+                )
                 return
             except Exception as e:
                 _kafka_disabled = True
@@ -80,23 +90,30 @@ class HecateEventBus:
             conn.execute("PRAGMA journal_mode=WAL;")
         except Exception:
             pass
-        cursor.execute("INSERT INTO events (topic, payload) VALUES (?, ?)", (topic, json.dumps(payload)))
+        cursor.execute(
+            "INSERT INTO events (topic, payload) VALUES (?, ?)", (topic, json.dumps(payload))
+        )
         conn.commit()
         conn.close()
-        log.info("event_bus.published_to_sqlite", topic=topic, evt_id=payload.get("event_id") or payload.get("id") or payload.get("incident_id"))
+        log.info(
+            "event_bus.published_to_sqlite",
+            topic=topic,
+            evt_id=payload.get("event_id") or payload.get("id") or payload.get("incident_id"),
+        )
 
     def subscribe(self, topics: list[str], group_id: str):
         global _kafka_disabled
         if self.use_kafka and not _kafka_disabled:
             try:
                 from kafka import KafkaConsumer
+
                 consumer = KafkaConsumer(
                     *topics,
                     bootstrap_servers=self.kafka_servers,
                     group_id=group_id,
-                    value_deserializer=lambda x: json.loads(x.decode('utf-8')),
-                    auto_offset_reset='latest',
-                    enable_auto_commit=True
+                    value_deserializer=lambda x: json.loads(x.decode("utf-8")),
+                    auto_offset_reset="latest",
+                    enable_auto_commit=True,
                 )
                 log.info("event_bus.kafka_subscriber_started", topics=topics, group_id=group_id)
                 for message in consumer:
@@ -131,8 +148,7 @@ class HecateEventBus:
             except Exception:
                 pass
             cursor.execute(
-                "SELECT id, topic, payload FROM events WHERE id > ? ORDER BY id ASC",
-                (last_id,)
+                "SELECT id, topic, payload FROM events WHERE id > ? ORDER BY id ASC", (last_id,)
             )
             rows = cursor.fetchall()
             conn.close()

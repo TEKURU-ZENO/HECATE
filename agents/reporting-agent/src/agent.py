@@ -6,6 +6,7 @@ from .config import Settings
 
 log = structlog.get_logger()
 
+
 class ReportingAgent:
     """HECATE Reporting Agent — Generates formatted summaries and notifications for incidents core logic class."""
 

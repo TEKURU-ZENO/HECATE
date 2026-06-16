@@ -1,5 +1,6 @@
 import networkx as nx
 
+
 class DependencyResolver:
     @staticmethod
     def load_graph(topology_cfg: dict) -> nx.DiGraph:
@@ -9,20 +10,20 @@ class DependencyResolver:
         graph = nx.DiGraph()
         if not topology_cfg:
             return graph
-            
+
         services = topology_cfg.get("services", [])
         dependencies = topology_cfg.get("dependencies", [])
-        
+
         # Add all service nodes
         for svc in services:
             graph.add_node(svc)
-            
+
         # Add dependency edges (u -> v: u depends on v)
         for dep in dependencies:
             if len(dep) == 2:
                 u, v = dep[0], dep[1]
                 graph.add_edge(u, v)
-                
+
         return graph
 
     @staticmethod

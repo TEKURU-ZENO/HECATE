@@ -9,6 +9,7 @@ from .hecate_events import HecateEventBus
 
 log = structlog.get_logger()
 
+
 class DetectionAgent:
     def __init__(self, settings) -> None:
         self.settings = settings
@@ -21,6 +22,7 @@ class DetectionAgent:
     def _load_ml_model(self):
         try:
             import joblib
+
             ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
             model_path = os.path.join(ROOT_DIR, "ml", "models", "isolation_forest.pkl")
             if os.path.exists(model_path):
@@ -48,7 +50,7 @@ class DetectionAgent:
         return {
             "cpu_high": {"metric": "cpu_usage", "threshold": 90},
             "memory_high": {"metric": "memory_usage", "threshold": 85},
-            "restart_high": {"metric": "restart_count", "threshold": 5}
+            "restart_high": {"metric": "restart_count", "threshold": 5},
         }
 
     async def run(self) -> None:
@@ -87,19 +89,24 @@ class DetectionAgent:
                     "service_name": service_name,
                     "namespace": namespace,
                     "timestamp": time.time(),
-                    "triggered_by_event": event.get("event_id")
+                    "triggered_by_event": event.get("event_id"),
                 }
-                log.info("detection_agent.rule_anomaly_detected", anomaly_type=rule_name, value=current_value)
+                log.info(
+                    "detection_agent.rule_anomaly_detected",
+                    anomaly_type=rule_name,
+                    value=current_value,
+                )
                 self.event_bus.publish("anomaly-topic", anomaly_payload)
 
         # 2. Machine Learning Unsupervised Isolation Forest Evaluation
         if self.ml_model is not None:
             try:
                 import numpy as np
+
                 cpu = float(metrics.get("cpu_usage", 0.0))
                 mem = float(metrics.get("memory_usage", 0.0))
                 restarts = float(metrics.get("restart_count", 0.0))
-                
+
                 prediction = self.ml_model.predict(np.array([[cpu, mem, restarts]]))[0]
                 if prediction == -1:
                     anomaly_id = str(uuid.uuid4())
@@ -113,9 +120,11 @@ class DetectionAgent:
                         "service_name": service_name,
                         "namespace": namespace,
                         "timestamp": time.time(),
-                        "triggered_by_event": event.get("event_id")
+                        "triggered_by_event": event.get("event_id"),
                     }
-                    log.info("detection_agent.ml_anomaly_detected", cpu=cpu, mem=mem, restarts=restarts)
+                    log.info(
+                        "detection_agent.ml_anomaly_detected", cpu=cpu, mem=mem, restarts=restarts
+                    )
                     self.event_bus.publish("anomaly-topic", anomaly_payload)
             except Exception as ex:
                 log.error("detection_agent.ml_inference_failed", error=str(ex))

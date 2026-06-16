@@ -9,6 +9,7 @@ from ..hecate_db import get_db_connection
 router = APIRouter()
 log = structlog.get_logger()
 
+
 @router.get("/anomalies")
 async def get_anomalies():
     conn, use_pg = get_db_connection()
@@ -24,6 +25,7 @@ async def get_anomalies():
         res = [dict(row) for row in rows]
     conn.close()
     return res
+
 
 # Trigger method runs in background of service
 def run_anomaly_listener():
@@ -50,12 +52,30 @@ def run_anomaly_listener():
                 if use_pg:
                     cursor.execute(
                         "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, root_cause, confidence_score, detected_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())",
-                        (incident_id, code, title, severity, status, anomaly.get("service_name"), f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}", 1.0)
+                        (
+                            incident_id,
+                            code,
+                            title,
+                            severity,
+                            status,
+                            anomaly.get("service_name"),
+                            f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}",
+                            1.0,
+                        ),
                     )
                 else:
                     cursor.execute(
                         "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, root_cause, confidence_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                        (incident_id, code, title, severity, status, anomaly.get("service_name"), f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}", 1.0)
+                        (
+                            incident_id,
+                            code,
+                            title,
+                            severity,
+                            status,
+                            anomaly.get("service_name"),
+                            f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}",
+                            1.0,
+                        ),
                     )
                 conn.commit()
                 conn.close()
@@ -70,7 +90,7 @@ def run_anomaly_listener():
                     "service_name": anomaly.get("service_name"),
                     "namespace": anomaly.get("namespace"),
                     "anomaly_id": anomaly.get("id"),
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
                 bus.publish("incident-topic", incident_payload)
 

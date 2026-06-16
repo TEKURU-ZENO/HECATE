@@ -1,4 +1,5 @@
 """HECATE Dashboard API backend."""
+
 import asyncio
 import json
 
@@ -8,10 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 log = structlog.get_logger()
 
-app = FastAPI(
-    title="HECATE Dashboard API Backend",
-    version="0.1.0"
-)
+app = FastAPI(title="HECATE Dashboard API Backend", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +17,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class ConnectionManager:
     def __init__(self):
@@ -35,11 +34,14 @@ class ConnectionManager:
         for connection in self.active_connections:
             await connection.send_text(message)
 
+
 manager = ConnectionManager()
+
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
 
 @app.get("/api/v1/incidents")
 async def list_incidents():
@@ -51,9 +53,10 @@ async def list_incidents():
             "severity": "critical",
             "status": "investigating",
             "serviceName": "payment-service",
-            "detectedAt": "2026-06-02T22:34:59Z"
+            "detectedAt": "2026-06-02T22:34:59Z",
         }
     ]
+
 
 @app.get("/api/v1/agents")
 async def list_agents():
@@ -63,9 +66,10 @@ async def list_agents():
             "agentName": "monitoring-agent",
             "version": "1.3.2",
             "status": "active",
-            "healthScore": 0.98
+            "healthScore": 0.98,
         }
     ]
+
 
 @app.get("/api/v1/metrics/summary")
 async def get_metrics_summary():
@@ -75,9 +79,10 @@ async def get_metrics_summary():
             "availability": 94.50,
             "errorRate": 5.50,
             "responseTime": 890,
-            "status": "degraded"
+            "status": "degraded",
         }
     ]
+
 
 @app.websocket("/ws/live")
 async def websocket_endpoint(websocket: WebSocket):
@@ -87,7 +92,11 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             # Send periodic mock telemetry feed
             await asyncio.sleep(5)
-            feed_data = {"type": "telemetry_ping", "uptime": 99.87, "timestamp": "2026-06-02T22:34:59Z"}
+            feed_data = {
+                "type": "telemetry_ping",
+                "uptime": 99.87,
+                "timestamp": "2026-06-02T22:34:59Z",
+            }
             await websocket.send_text(json.dumps(feed_data))
     except WebSocketDisconnect:
         manager.disconnect(websocket)

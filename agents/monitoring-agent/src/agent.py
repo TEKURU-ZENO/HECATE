@@ -10,6 +10,7 @@ from .hecate_events import HecateEventBus
 
 log = structlog.get_logger()
 
+
 class MonitoringAgent:
     def __init__(self, settings) -> None:
         self.settings = settings
@@ -35,7 +36,7 @@ class MonitoringAgent:
                     "timestamp": time.time(),
                     "service_name": self.settings.target_service,
                     "namespace": self.settings.target_namespace,
-                    "metrics": metrics
+                    "metrics": metrics,
                 }
 
                 self.event_bus.publish("metrics-topic", event_payload)
@@ -50,7 +51,9 @@ class MonitoringAgent:
 
     async def scrape_metrics(self, cycle: int) -> dict:
         # Check for user-driven simulation triggers in the workspace root
-        sim_trigger_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "simulation_trigger.json"))
+        sim_trigger_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "simulation_trigger.json")
+        )
         cpu = 45.0
         memory = 60.0
         restarts = 0
@@ -62,7 +65,12 @@ class MonitoringAgent:
                 cpu = trigger.get("cpu_usage", cpu)
                 memory = trigger.get("memory_usage", memory)
                 restarts = trigger.get("restart_count", restarts)
-                log.info("monitoring_agent.simulation_trigger_detected", cpu=cpu, memory=memory, restarts=restarts)
+                log.info(
+                    "monitoring_agent.simulation_trigger_detected",
+                    cpu=cpu,
+                    memory=memory,
+                    restarts=restarts,
+                )
             except Exception as e:
                 log.error("monitoring_agent.simulation_trigger_read_failed", error=str(e))
         else:
@@ -77,8 +85,4 @@ class MonitoringAgent:
                 restarts = 6
                 log.info("monitoring_agent.simulating_oom_crash")
 
-        return {
-            "cpu_usage": cpu,
-            "memory_usage": memory,
-            "restart_count": restarts
-        }
+        return {"cpu_usage": cpu, "memory_usage": memory, "restart_count": restarts}

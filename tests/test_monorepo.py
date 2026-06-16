@@ -13,7 +13,6 @@ from hecate_events import HecateEventBus
 
 
 class TestHecateMonorepo(unittest.TestCase):
-
     def test_event_bus_pub_sub(self):
         """Verify HecateEventBus can publish and receive messages."""
         bus = HecateEventBus()
@@ -22,6 +21,7 @@ class TestHecateMonorepo(unittest.TestCase):
 
         # Publish in a separate thread after subscriber is active
         import threading
+
         def delayed_publish():
             time.sleep(1.0)
             bus.publish(test_topic, test_payload)
@@ -62,12 +62,12 @@ class TestHecateMonorepo(unittest.TestCase):
         if use_pg:
             cursor.execute(
                 "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, detected_at) VALUES (%s, %s, %s, %s, %s, %s, NOW())",
-                (inc_id, inc_id, title, severity, status, service_name)
+                (inc_id, inc_id, title, severity, status, service_name),
             )
         else:
             cursor.execute(
                 "INSERT INTO incidents (id, incident_code, title, severity, status, service_name) VALUES (?, ?, ?, ?, ?, ?)",
-                (inc_id, inc_id, title, severity, status, service_name)
+                (inc_id, inc_id, title, severity, status, service_name),
             )
 
         conn.commit()
@@ -83,6 +83,7 @@ class TestHecateMonorepo(unittest.TestCase):
         cursor.execute("DELETE FROM incidents WHERE id = ?", (inc_id,))
         conn.commit()
         conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,12 +7,17 @@ import os
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TRIGGER_FILE = os.path.join(ROOT_DIR, "simulation_trigger.json")
 
+
 def main():
     parser = argparse.ArgumentParser(description="HECATE Simulation Trigger Injector")
     parser.add_argument("--cpu", type=float, help="Simulate specific CPU percentage (e.g. 95.0)")
-    parser.add_argument("--memory", type=float, help="Simulate specific Memory percentage (e.g. 90.0)")
+    parser.add_argument(
+        "--memory", type=float, help="Simulate specific Memory percentage (e.g. 90.0)"
+    )
     parser.add_argument("--restarts", type=int, help="Simulate container restart count (e.g. 6)")
-    parser.add_argument("--clear", action="store_true", help="Remove active trigger, return to baseline")
+    parser.add_argument(
+        "--clear", action="store_true", help="Remove active trigger, return to baseline"
+    )
 
     args = parser.parse_args()
 
@@ -40,6 +45,7 @@ def main():
         json.dump(payload, f)
 
     print(f"[Simulation] Trigger injected successfully: {payload}")
+
 
 if __name__ == "__main__":
     main()
