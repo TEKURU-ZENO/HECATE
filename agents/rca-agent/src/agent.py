@@ -62,6 +62,25 @@ class RcaAgent:
 
         log.info("rca_agent.received_incident", incident_id=incident_id, service=service_name)
 
+        # Transition status to INVESTIGATING
+        try:
+            conn, use_pg = get_db_connection()
+            cursor = conn.cursor()
+            if use_pg:
+                cursor.execute(
+                    "UPDATE incidents SET status = 'INVESTIGATING' WHERE id = %s AND status = 'NEW'",
+                    (incident_id,),
+                )
+            else:
+                cursor.execute(
+                    "UPDATE incidents SET status = 'INVESTIGATING' WHERE id = ? AND status = 'NEW'",
+                    (incident_id,),
+                )
+            conn.commit()
+            conn.close()
+        except Exception as se:
+            log.error("rca_agent.status_investigating_update_failed", error=str(se))
+
         # 1. Resolve downstream dependencies using DependencyResolver
         downstream = DependencyResolver.get_downstream_dependencies(self.graph, service_name)
         log.info("rca_agent.downstream_resolved", service=service_name, downstream=downstream)
@@ -79,12 +98,12 @@ class RcaAgent:
             # Fetch active incidents
             if use_pg:
                 cursor.execute(
-                    "SELECT service_name, title FROM incidents WHERE status NOT IN ('remediated', 'closed') AND id != %s",
+                    "SELECT service_name, title FROM incidents WHERE status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED') AND id != %s",
                     (incident_id,),
                 )
             else:
                 cursor.execute(
-                    "SELECT service_name, title FROM incidents WHERE status NOT IN ('remediated', 'closed') AND id != ?",
+                    "SELECT service_name, title FROM incidents WHERE status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED') AND id != ?",
                     (incident_id,),
                 )
 

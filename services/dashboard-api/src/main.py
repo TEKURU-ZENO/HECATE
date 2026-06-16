@@ -5,8 +5,15 @@ import json
 import threading
 
 import structlog
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+
+class ResolveApprovalRequest(BaseModel):
+    action: str
+    operator: str = "operator"
+
 
 from .hecate_db import get_db_connection
 from .hecate_events import HecateEventBus
@@ -61,6 +68,7 @@ def start_ws_broadcaster():
                 "remediation-topic",
                 "learning-topic",
                 "recommendation-topic",
+                "approval-topic",
             ],
             group_id="ws-group",
         ):
@@ -167,6 +175,69 @@ async def get_recommendations():
     res = [dict(row) for row in rows]
     conn.close()
     return res
+
+
+@app.get("/api/v1/approvals")
+async def get_approvals():
+    conn, _ = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM approvals ORDER BY requested_at DESC")
+    rows = cursor.fetchall()
+    res = [dict(row) for row in rows]
+    conn.close()
+    return res
+
+
+@app.post("/api/v1/approvals/{approval_id}/resolve")
+async def resolve_approval(approval_id: str, req: ResolveApprovalRequest):
+    import time
+
+    conn, _ = get_db_connection()
+    cursor = conn.cursor()
+
+    # Query current status to prevent double-resolution/concurrency issues
+    cursor.execute(
+        "SELECT status, incident_id, incident_type, recommended_action, root_cause_service, risk_level, recommendation_score FROM approvals WHERE id = ?",
+        (approval_id,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Approval not found")
+
+    approval_rec = dict(row)
+    if approval_rec["status"] != "pending":
+        conn.close()
+        raise HTTPException(
+            status_code=409,
+            detail=f"Approval already resolved. Current status: {approval_rec['status']}",
+        )
+
+    # Update approval
+    status_str = "approved" if req.action == "approve" else "rejected"
+    cursor.execute(
+        "UPDATE approvals SET status = ?, decided_at = CURRENT_TIMESTAMP, decided_by = ? WHERE id = ?",
+        (status_str, req.operator, approval_id),
+    )
+    conn.commit()
+    conn.close()
+
+    # Publish resolved event to approval-topic
+    bus = HecateEventBus()
+    payload = {
+        "approval_id": approval_id,
+        "incident_id": approval_rec["incident_id"],
+        "incident_type": approval_rec["incident_type"],
+        "service": approval_rec["root_cause_service"],
+        "recommended_action": approval_rec["recommended_action"],
+        "risk_level": approval_rec["risk_level"],
+        "recommendation_score": approval_rec["recommendation_score"],
+        "status": status_str,
+        "timestamp": time.time(),
+    }
+    bus.publish("approval-topic", payload)
+
+    return {"status": "success", "resolved_status": status_str}
 
 
 @app.get("/api/v1/learning/feedback")

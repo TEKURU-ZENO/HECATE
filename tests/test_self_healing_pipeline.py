@@ -20,7 +20,7 @@ def wait_for_incidents_resolve(timeout=30):
         conn, _ = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT COUNT(*) FROM incidents WHERE service_name = 'payment-service' AND status NOT IN ('remediated', 'closed', 'failed')"
+            "SELECT COUNT(*) FROM incidents WHERE service_name = 'payment-service' AND LOWER(status) NOT IN ('remediated', 'closed', 'failed', 'rejected')"
         )
         open_count = cursor.fetchone()[0]
         conn.close()
@@ -33,7 +33,7 @@ def wait_for_incidents_resolve(timeout=30):
         conn, _ = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT COUNT(*) FROM incidents WHERE service_name = 'payment-service' AND status NOT IN ('remediated', 'closed', 'failed')"
+            "SELECT COUNT(*) FROM incidents WHERE service_name = 'payment-service' AND LOWER(status) NOT IN ('remediated', 'closed', 'failed', 'rejected')"
         )
         open_count = cursor.fetchone()[0]
         conn.close()
@@ -582,8 +582,259 @@ def main():
         )
         print("[Scenario 6] Cold-start fallback verified successfully.")
 
+        # ==========================================
+        # Scenario 7: Human-in-the-Loop Approved Execution
+        # ==========================================
+        print("\n--- Running Scenario 7: Human-in-the-Loop Approved Execution ---")
+
+        # 1. Update policy pol-001 to have risk_level = 'high'
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE policies SET risk_level = 'high' WHERE id = 'pol-001'")
+        cursor.execute("DELETE FROM approvals")
+        cursor.execute("UPDATE incidents SET status = 'remediated'")
+        conn.commit()
+        conn.close()
+
+        # Wait for any trailing events to settle
+        time.sleep(5.0)
+
+        # 2. Publish metric event to trigger memory_high on order-service
+        event_payload = {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "telemetry.metric",
+            "timestamp": time.time(),
+            "service_name": "order-service",
+            "namespace": "hecate-system",
+            "metrics": {
+                "cpu_usage": 45.0,
+                "memory_usage": 95.0,
+                "restart_count": 0,
+            },
+        }
+        bus.publish("metrics-topic", event_payload)
+        print("[Scenario 7] Published metric event to trigger high-risk approval.")
+
+        # 3. Wait for approval record to be created (status='pending')
+        print("[Scenario 7] Waiting for pending approval request in DB...")
+        approval_rec = None
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM approvals WHERE status = 'pending' ORDER BY requested_at DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row is not None:
+                approval_rec = dict(row)
+                break
+            time.sleep(1.0)
+
+        assert approval_rec is not None, (
+            "Scenario 7: No pending approval request found in database!"
+        )
+
+        # 4. Verify incident status is AWAITING_APPROVAL
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM incidents WHERE id = ?", (approval_rec["incident_id"],))
+        inc_status = cursor.fetchone()[0]
+        conn.close()
+        assert inc_status == "AWAITING_APPROVAL", (
+            f"Scenario 7: Expected status AWAITING_APPROVAL, got {inc_status}"
+        )
+
+        # 5. Resolve approval via HTTP API resolve route
+        import httpx
+
+        resolve_res = httpx.post(
+            f"http://localhost:8000/api/v1/approvals/{approval_rec['id']}/resolve",
+            json={"action": "approve", "operator": "e2e-tester"},
+        )
+        assert resolve_res.status_code == 200, (
+            f"Scenario 7: Failed to resolve approval: {resolve_res.status_code}"
+        )
+
+        # 6. Wait for incident status to transition to REMEDIATED
+        remediated = False
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT status FROM incidents WHERE id = ?", (approval_rec["incident_id"],)
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row and row[0].upper() == "REMEDIATED":
+                remediated = True
+                break
+            time.sleep(1.0)
+
+        assert remediated, "Scenario 7: Incident status was not transitioned to REMEDIATED!"
+        print("[Scenario 7] HITL approved execution verified successfully.")
+
+        # ==========================================
+        # Scenario 8: Human-in-the-Loop Rejected Execution
+        # ==========================================
+        print("\n--- Running Scenario 8: Human-in-the-Loop Rejected Execution ---")
+
+        # 1. Reset approvals and database state
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM approvals")
+        cursor.execute("UPDATE incidents SET status = 'remediated'")
+        conn.commit()
+        conn.close()
+
+        # Wait for any trailing events to settle
+        time.sleep(5.0)
+
+        # 2. Publish metric event to trigger memory_high on order-service
+        event_payload = {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "telemetry.metric",
+            "timestamp": time.time(),
+            "service_name": "order-service",
+            "namespace": "hecate-system",
+            "metrics": {
+                "cpu_usage": 45.0,
+                "memory_usage": 95.0,
+                "restart_count": 0,
+            },
+        }
+        bus.publish("metrics-topic", event_payload)
+        print("[Scenario 8] Published metric event to trigger high-risk approval.")
+
+        # 3. Wait for approval record to be created
+        approval_rec = None
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM approvals WHERE status = 'pending' ORDER BY requested_at DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row is not None:
+                approval_rec = dict(row)
+                break
+            time.sleep(1.0)
+
+        assert approval_rec is not None, (
+            "Scenario 8: No pending approval request found in database!"
+        )
+
+        # 4. Resolve approval with reject action
+        resolve_res = httpx.post(
+            f"http://localhost:8000/api/v1/approvals/{approval_rec['id']}/resolve",
+            json={"action": "reject", "operator": "e2e-tester"},
+        )
+        assert resolve_res.status_code == 200, (
+            f"Scenario 8: Failed to reject approval: {resolve_res.status_code}"
+        )
+
+        # 5. Check database states: status CLOSED/REJECTED, 0 remediation runs
+        time.sleep(3.0)
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM incidents WHERE id = ?", (approval_rec["incident_id"],))
+        final_status = cursor.fetchone()[0]
+        cursor.execute(
+            "SELECT COUNT(*) FROM remediations WHERE incident_id = ?",
+            (approval_rec["incident_id"],),
+        )
+        rem_count = cursor.fetchone()[0]
+        conn.close()
+        assert final_status.upper() in ["CLOSED", "REJECTED"], (
+            f"Scenario 8: Expected status CLOSED or REJECTED, got {final_status}"
+        )
+        assert rem_count == 0, f"Scenario 8: Expected 0 remediations executed, got {rem_count}"
+        print("[Scenario 8] HITL rejected execution verified successfully.")
+
+        # ==========================================
+        # Scenario 9: Duplicate Approval Concurrency Protection
+        # ==========================================
+        print("\n--- Running Scenario 9: Duplicate Approval Concurrency Protection ---")
+
+        # 1. Reset approvals and database state
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM approvals")
+        cursor.execute("UPDATE incidents SET status = 'remediated'")
+        conn.commit()
+        conn.close()
+
+        # Wait for trailing events
+        time.sleep(5.0)
+
+        # 2. Publish metric event to trigger memory_high on order-service
+        event_payload = {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "telemetry.metric",
+            "timestamp": time.time(),
+            "service_name": "order-service",
+            "namespace": "hecate-system",
+            "metrics": {
+                "cpu_usage": 45.0,
+                "memory_usage": 95.0,
+                "restart_count": 0,
+            },
+        }
+        bus.publish("metrics-topic", event_payload)
+
+        # 3. Wait for approval record to be created
+        approval_rec = None
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM approvals WHERE status = 'pending' ORDER BY requested_at DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row is not None:
+                approval_rec = dict(row)
+                break
+            time.sleep(1.0)
+
+        assert approval_rec is not None, (
+            "Scenario 9: No pending approval request found in database!"
+        )
+
+        # 4. Fire concurrent HTTP resolve approval posts
+        import asyncio
+
+        async def resolve_async(app_id, action):
+            async with httpx.AsyncClient() as client:
+                return await client.post(
+                    f"http://localhost:8000/api/v1/approvals/{app_id}/resolve",
+                    json={"action": action, "operator": "e2e-tester"},
+                    timeout=5.0,
+                )
+
+        async def run_concurrent():
+            return await asyncio.gather(
+                resolve_async(approval_rec["id"], "approve"),
+                resolve_async(approval_rec["id"], "approve"),
+            )
+
+        responses = asyncio.run(run_concurrent())
+        status_codes = [r.status_code for r in responses]
+        print(f"[Scenario 9] Concurrency status codes received: {status_codes}")
+        assert 200 in status_codes, "Scenario 9: Expected one resolution to succeed with 200 OK"
+        assert 409 in status_codes, "Scenario 9: Expected one resolution to fail with 409 Conflict"
+        print("[Scenario 9] Concurrency double-resolve protection verified successfully.")
+
+        # Cleanup: restore policy risk_level back to 'medium'
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE policies SET risk_level = 'medium' WHERE id = 'pol-001'")
+        conn.commit()
+        conn.close()
+
         print(
-            "[E2E Test] SUCCESS: All 6 Scenarios (1: Anomaly detection, 2: RCA, 3: Learning Memory, 4: Double Trigger stats, 5: Similarity Recommendation, 6: Cold-Start Fallback) verified successfully!"
+            "[E2E Test] SUCCESS: All 9 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution) verified successfully!"
         )
         sys.exit(0)
 

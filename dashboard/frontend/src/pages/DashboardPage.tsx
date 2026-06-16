@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Activity, Clock, Server, CheckCircle2, AlertTriangle, XCircle, Power, Brain, Sparkles, Lightbulb } from 'lucide-react';
+import { Shield, Activity, Clock, Server, CheckCircle2, AlertTriangle, XCircle, Power, Brain, Sparkles, Lightbulb, UserCheck, Lock } from 'lucide-react';
 import { SeverityBadge, StatusBadge } from '@/components/Badge';
 import { formatTimestamp } from '@/lib/utils';
 
@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [systemHealth, setSystemHealth] = useState<'Healthy' | 'Warning' | 'Critical'>('Healthy');
   const [learningFeedback, setLearningFeedback] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<any[]>([]);
   const [learningStats, setLearningStats] = useState<any>({
     total_incidents: 0,
     avg_recovery_time: 0.0,
@@ -49,11 +50,32 @@ export default function DashboardPage() {
       const recsRes = await fetch('http://localhost:8000/api/v1/recommendations');
       if (recsRes.ok) setRecommendations(await recsRes.json());
 
+      const appRes = await fetch('http://localhost:8000/api/v1/approvals');
+      if (appRes.ok) setApprovals(await appRes.json());
+
       const statsRes = await fetch('http://localhost:8000/api/v1/learning/stats');
       if (statsRes.ok) setLearningStats(await statsRes.json());
       
     } catch (e) {
       console.warn('Dashboard REST API not reachable yet. Using simulated feed.');
+    }
+  };
+
+  const handleResolveApproval = async (approvalId: string, action: 'approve' | 'reject') => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/approvals/${approvalId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, operator: 'dashboard-ui' })
+      });
+      if (res.ok) {
+        fetchDashboardData();
+      } else if (res.status === 409) {
+        alert("This approval has already been resolved by another session.");
+        fetchDashboardData();
+      }
+    } catch (e) {
+      console.error("Failed to resolve approval:", e);
     }
   };
 
@@ -242,6 +264,97 @@ export default function DashboardPage() {
                 ))
               )}
             </div>
+          </div>
+        </div>
+
+        {/* HUMAN-IN-THE-LOOP GOVERNANCE & APPROVALS QUEUE CARD */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-6 backdrop-blur-md md:col-span-2">
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-amber-400 animate-pulse" />
+              <span className="text-xs font-semibold text-white/30 uppercase tracking-wider block">Human-in-the-Loop Governance & Approvals Queue</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/25 text-[10px] text-amber-400 font-mono font-bold flex items-center gap-1">
+              <Lock className="w-3 h-3 text-amber-400" />
+              HITL GATE ACTIVE
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            <span className="text-[11px] font-semibold text-white/50 block">Pending Action Authorizations</span>
+            {approvals.filter(a => a.status === 'pending').length === 0 ? (
+              <div className="text-center py-8 text-xs text-white/20 border border-dashed border-white/5 rounded-lg">No pending approval requests in this cycle.</div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {approvals.filter(a => a.status === 'pending').map((app) => {
+                  const scorePercent = app.recommendation_score * 100;
+                  const isHighRisk = app.risk_level === 'HIGH';
+                  const riskColor = isHighRisk 
+                    ? 'text-red-400 border-red-500/20 bg-red-500/10' 
+                    : 'text-amber-400 border-amber-500/20 bg-amber-500/10';
+                  
+                  const blinkingClass = isHighRisk ? 'animate-pulse border-red-500/40 bg-red-950/20' : '';
+
+                  return (
+                    <div key={app.id} className={`p-4 rounded-lg bg-black/20 border border-white/5 hover:border-white/10 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 font-mono text-[11px] ${blinkingClass}`}>
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded border text-[9px] font-bold ${riskColor}`}>
+                            {app.risk_level} RISK GATEWAY
+                          </span>
+                          <span className="text-white/40">·</span>
+                          <span className="text-white font-bold">{app.incident_type}</span>
+                          <span className="text-white/40">on</span>
+                          <span className="text-white/80 font-bold">{app.root_cause_service}</span>
+                        </div>
+                        
+                        <div className="text-white/60 text-[11px] leading-relaxed">
+                          <span className="text-amber-400 font-semibold">Suggested Action:</span> <span className="text-white font-bold capitalize bg-white/5 px-2 py-0.5 rounded">{app.recommended_action.replace('_', ' ')}</span>
+                        </div>
+
+                        <div className="text-white/35 text-[10px] leading-relaxed">
+                          <span className="text-white/50">Reason:</span> {app.approval_reason || "Requires operator review due to system blast radius rules."}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-6 border-t lg:border-t-0 border-white/5 pt-3 lg:pt-0">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-white/40 uppercase">Recommendation Score</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="font-bold text-white">{scorePercent.toFixed(0)}%</span>
+                            <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-500" style={{ width: `${scorePercent}%` }} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleResolveApproval(app.id, 'approve')}
+                            className="px-3 py-1.5 rounded bg-green-500 hover:bg-green-600 text-white font-bold text-[10px] transition-colors shadow-lg shadow-green-500/10"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleResolveApproval(app.id, 'reject')}
+                            className="px-3 py-1.5 rounded bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] transition-colors shadow-lg shadow-red-500/10"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            disabled
+                            className="px-3 py-1.5 rounded bg-white/5 border border-white/10 text-white/30 font-bold text-[10px] cursor-not-allowed"
+                            title="Modifying playbooks is disabled in this version"
+                          >
+                            Modify
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
