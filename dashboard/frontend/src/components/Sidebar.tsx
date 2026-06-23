@@ -9,6 +9,7 @@ import {
   Settings,
   Zap,
   ChevronRight,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ const navItems = [
   { to: '/policies',  label: 'Policies',   Icon: Shield                      },
   { to: '/analytics', label: 'Analytics',  Icon: BarChart2                   },
   { to: '/settings',  label: 'Settings',   Icon: Settings                    },
+  { to: '/copilot',   label: 'HECATE Copilot', Icon: MessageSquare               },
 ];
 
 export default function Sidebar() {
@@ -86,7 +88,7 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-white/80">System Operational</div>
-            <div className="text-[10px] text-white/30 font-mono">7/7 agents running</div>
+            <div className="text-[10px] text-white/30 font-mono">8/8 agents running</div>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-white/20" />
         </div>

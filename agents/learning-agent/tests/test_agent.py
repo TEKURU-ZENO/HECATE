@@ -1,4 +1,5 @@
 import pytest
+
 from src.agent import LearningAgent
 from src.config import Settings
 

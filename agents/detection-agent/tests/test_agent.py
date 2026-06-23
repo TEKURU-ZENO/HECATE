@@ -1,4 +1,5 @@
 import pytest
+
 from src.agent import DetectionAgent
 from src.config import Settings
 

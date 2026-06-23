@@ -1,4 +1,5 @@
 import pytest
+
 from src.agent import DecisionAgent
 from src.config import Settings
 

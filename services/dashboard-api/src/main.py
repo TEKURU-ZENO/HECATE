@@ -318,6 +318,23 @@ async def get_forecast_stats():
     }
 
 
+@app.post("/api/v1/copilot/chat")
+async def copilot_chat(req: dict):
+    import httpx
+
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                "http://localhost:8004/api/v1/copilot/chat", json=req, timeout=15.0
+            )
+            if res.status_code != 200:
+                raise HTTPException(status_code=res.status_code, detail=res.text)
+            return res.json()
+    except httpx.RequestError as e:
+        log.error("dashboard_api.copilot_proxy_failed", error=str(e))
+        raise HTTPException(status_code=503, detail=f"Copilot service unreachable: {e}")
+
+
 @app.websocket("/ws/live")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)

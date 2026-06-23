@@ -1,0 +1,1 @@
+# HECATE Copilot Service package

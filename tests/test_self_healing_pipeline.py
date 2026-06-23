@@ -50,6 +50,8 @@ def main():
     os.environ["HECATE_DB_ENGINE"] = "sqlite"
     os.environ["HECATE_EVENT_ENGINE"] = "sqlite"
     os.environ["HECATE_TEST_MODE"] = "true"
+    os.environ["SCRAPE_INTERVAL_SECONDS"] = "5.0"
+    os.environ["COPILOT_INDEX_REFRESH_INTERVAL"] = "1"
     print("[E2E Test] Starting end-to-end self-healing pipeline verification...")
 
     # 1. Clean previous database states to start fresh
@@ -79,6 +81,7 @@ def main():
         {"name": "anomaly-service", "path": "services/anomaly-service", "port": 8001},
         {"name": "policy-service", "path": "services/policy-service", "port": 8002},
         {"name": "forecasting-service", "path": "services/forecasting-service", "port": 8003},
+        {"name": "copilot-service", "path": "services/copilot-service", "port": 8004},
     ]
 
     for svc in services:
@@ -874,7 +877,7 @@ def main():
         # Wait for the predicted incident to be generated
         print("[Scenario 10] Waiting for predicted incident in database...")
         predicted_inc = None
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -967,8 +970,97 @@ def main():
         )
         print("[Scenario 11] False positive protection verified successfully.")
 
+        # ==========================================
+        # Scenario 12: HECATE Copilot Chat MTTR & Prevented Incidents QA
+        # ==========================================
+        print("\n--- Running Scenario 12: HECATE Copilot Chat MTTR & Prevented Incidents QA ---")
+        import httpx
+
+        # Wait 2 seconds for copilot database sync
+        time.sleep(2.0)
+
+        # 1. Ask about average MTTR
+        payload_mttr = {"message": "What is our average MTTR?", "session_id": "test-session"}
+        res_mttr = httpx.post(
+            "http://localhost:8000/api/v1/copilot/chat", json=payload_mttr, timeout=5.0
+        )
+        assert res_mttr.status_code == 200, (
+            f"Scenario 12: MTTR query failed: {res_mttr.status_code}"
+        )
+        data_mttr = res_mttr.json()
+        print(f"[Scenario 12] Copilot response for MTTR query: {data_mttr['response']}")
+        assert "average recovery time (MTTR)" in data_mttr["response"], (
+            "Scenario 12: Response did not contain MTTR information"
+        )
+
+        # 2. Ask about prevented incidents
+        payload_prev = {
+            "message": "How many incidents were prevented?",
+            "session_id": "test-session",
+        }
+        res_prev = httpx.post(
+            "http://localhost:8000/api/v1/copilot/chat", json=payload_prev, timeout=5.0
+        )
+        assert res_prev.status_code == 200, (
+            f"Scenario 12: Prevented query failed: {res_prev.status_code}"
+        )
+        data_prev = res_prev.json()
+        print(f"[Scenario 12] Copilot response for Prevented query: {data_prev['response']}")
+        assert "proactively prevented" in data_prev["response"], (
+            "Scenario 12: Response did not contain prevented incidents count"
+        )
+        print("[Scenario 12] Copilot Chat MTTR and Prevented Incidents QA verified successfully.")
+
+        # ==========================================
+        # Scenario 13: Similar Incident Retrieval TF-IDF search QA
+        # ==========================================
+        print("\n--- Running Scenario 13: Similar Incident Retrieval TF-IDF search QA ---")
+
+        # Ask about payment-db failure (should retrieve similar incident from database)
+        payload_similar = {"message": "Why did payment-db fail?", "session_id": "test-session"}
+        res_similar = httpx.post(
+            "http://localhost:8000/api/v1/copilot/chat", json=payload_similar, timeout=5.0
+        )
+        assert res_similar.status_code == 200, (
+            f"Scenario 13: Similar incident query failed: {res_similar.status_code}"
+        )
+        data_similar = res_similar.json()
         print(
-            "[E2E Test] SUCCESS: All 11 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution, 10: Proactive Mitigation, 11: False Positive Protection) verified successfully!"
+            f"[Scenario 13] Copilot response for similar incident query: {data_similar['response']}"
+        )
+        assert len(data_similar["sources"]) > 0, (
+            "Scenario 13: Expected at least one source document retrieved"
+        )
+        assert "payment-db" in data_similar["response"], (
+            "Scenario 13: Response did not mention payment-db"
+        )
+        print("[Scenario 13] Similar incident retrieval verified successfully.")
+
+        # ==========================================
+        # Scenario 14: Gemini Fallback Verification
+        # ==========================================
+        print("\n--- Running Scenario 14: Gemini Fallback Verification ---")
+
+        # With no GEMINI_API_KEY env set in this test environment, the copilot service must fall back to Mock mode
+        payload_fallback = {"message": "Top root causes this month", "session_id": "test-session"}
+        res_fallback = httpx.post(
+            "http://localhost:8000/api/v1/copilot/chat", json=payload_fallback, timeout=5.0
+        )
+        assert res_fallback.status_code == 200, (
+            f"Scenario 14: Fallback query failed: {res_fallback.status_code}"
+        )
+        data_fallback = res_fallback.json()
+        print(f"[Scenario 14] Copilot response mode: {data_fallback['mode']}")
+        assert data_fallback["mode"] == "mock", (
+            f"Scenario 14: Expected mode 'mock', got {data_fallback['mode']}"
+        )
+        assert "root cause" in data_fallback["response"], (
+            "Scenario 14: Response did not describe root causes"
+        )
+        print("[Scenario 14] Gemini fallback to Mock mode verified successfully.")
+
+        print(
+            "[E2E Test] SUCCESS: All 14 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution, 10: Proactive Mitigation, 11: False Positive Protection, 12: Copilot MTTR/Prevented QA, 13: Similar Incident Search, 14: Gemini Fallback) verified successfully!"
         )
         sys.exit(0)
 

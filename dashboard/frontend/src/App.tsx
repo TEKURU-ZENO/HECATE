@@ -7,6 +7,7 @@ import AgentsPage from './pages/AgentsPage';
 import PoliciesPage from './pages/PoliciesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
+import CopilotPage from './pages/CopilotPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="policies" element={<PoliciesPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="copilot" element={<CopilotPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

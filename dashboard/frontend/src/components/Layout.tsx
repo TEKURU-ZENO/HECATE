@@ -9,6 +9,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/policies':  'Policies',
   '/analytics': 'Analytics',
   '/settings':  'Settings',
+  '/copilot':   'HECATE Copilot',
 };
 
 export default function Layout() {

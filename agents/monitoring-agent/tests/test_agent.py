@@ -1,4 +1,5 @@
 import pytest
+
 from src.agent import MonitoringAgent
 from src.config import Settings
 

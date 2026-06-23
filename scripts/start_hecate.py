@@ -54,6 +54,7 @@ def main():
         {"name": "anomaly-service", "path": "services/anomaly-service", "port": 8001},
         {"name": "policy-service", "path": "services/policy-service", "port": 8002},
         {"name": "forecasting-service", "path": "services/forecasting-service", "port": 8003},
+        {"name": "copilot-service", "path": "services/copilot-service", "port": 8004},
     ]
 
     for svc in services:
