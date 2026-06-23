@@ -12,7 +12,6 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "agents", "services"]
-asyncio_mode = "auto"
 
 [tool.black]
 line-length = 100

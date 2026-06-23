@@ -5,8 +5,18 @@ import structlog
 
 log = structlog.get_logger()
 
-# Hardcoded absolute path for monorepo-wide consistency
-SQLITE_DB_PATH = r"c:\Users\Dev Mehta\Desktop\HECATE\hecate_db.sqlite"
+# Resolve database path dynamically to support cross-platform monorepo environments
+SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH")
+if not SQLITE_DB_PATH:
+    # Traverse directories upward to locate the repository root containing ROADMAP.md
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    while current_dir and current_dir != os.path.dirname(current_dir):
+        if os.path.exists(os.path.join(current_dir, "ROADMAP.md")) or os.path.exists(os.path.join(current_dir, ".git")):
+            SQLITE_DB_PATH = os.path.join(current_dir, "hecate_db.sqlite")
+            break
+        current_dir = os.path.dirname(current_dir)
+    if not SQLITE_DB_PATH:
+        SQLITE_DB_PATH = "hecate_db.sqlite"
 
 _pg_disabled = False
 
@@ -47,7 +57,9 @@ def get_db_connection():
             )
 
     # SQLite Fallback
-    os.makedirs(os.path.dirname(SQLITE_DB_PATH), exist_ok=True)
+    db_dir = os.path.dirname(SQLITE_DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = sqlite3.connect(SQLITE_DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     try:

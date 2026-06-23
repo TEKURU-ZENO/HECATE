@@ -13,6 +13,10 @@ from hecate_events import HecateEventBus
 
 
 class TestHecateMonorepo(unittest.TestCase):
+    def setUp(self):
+        os.environ["HECATE_EVENT_ENGINE"] = "sqlite"
+        os.environ["HECATE_DB_ENGINE"] = "sqlite"
+
     def test_event_bus_pub_sub(self):
         """Verify HecateEventBus can publish and receive messages."""
         bus = HecateEventBus()

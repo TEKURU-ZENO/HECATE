@@ -7,8 +7,18 @@ import structlog
 
 log = structlog.get_logger()
 
-# Hardcoded absolute path for monorepo-wide consistency
-DB_PATH = r"c:\Users\Dev Mehta\Desktop\HECATE\hecate_events.db"
+# Resolve database path dynamically to support cross-platform monorepo environments
+DB_PATH = os.environ.get("HECATE_EVENTS_DB_PATH")
+if not DB_PATH:
+    # Traverse directories upward to locate the repository root containing ROADMAP.md
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    while current_dir and current_dir != os.path.dirname(current_dir):
+        if os.path.exists(os.path.join(current_dir, "ROADMAP.md")) or os.path.exists(os.path.join(current_dir, ".git")):
+            DB_PATH = os.path.join(current_dir, "hecate_events.db")
+            break
+        current_dir = os.path.dirname(current_dir)
+    if not DB_PATH:
+        DB_PATH = "hecate_events.db"
 
 _kafka_disabled = False
 
@@ -47,7 +57,9 @@ class HecateEventBus:
             self._init_sqlite()
 
     def _init_sqlite(self):
-        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        db_dir = os.path.dirname(DB_PATH)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("""
