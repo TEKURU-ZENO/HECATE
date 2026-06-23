@@ -124,6 +124,28 @@ class DecisionAgent:
         risk_score, risk_level = self.calculate_risk(
             root_cause_service, recommendation_score, policy_risk_level
         )
+
+        is_predicted = rec_event.get("is_predicted", 0)
+        pred_conf = rec_event.get("prediction_confidence", 0.0)
+        if is_predicted:
+            discount = round(pred_conf * 0.15, 3)
+            old_score = risk_score
+            risk_score = max(0.0, risk_score - discount)
+            risk_score = round(risk_score, 2)
+            if risk_score >= 0.6:
+                risk_level = "HIGH"
+            elif risk_score >= 0.4:
+                risk_level = "MEDIUM"
+            else:
+                risk_level = "LOW"
+            log.info(
+                "decision_agent.risk_discount_applied",
+                original_score=old_score,
+                discount=discount,
+                new_score=risk_score,
+                new_level=risk_level,
+            )
+
         log.info(
             "decision_agent.risk_evaluation",
             service=root_cause_service,

@@ -41,14 +41,21 @@ class RecommendationAgent:
         # 1. Fetch incident details from database to resolve incident_type
         incident_type = "unknown"
         incident_title = "Unknown Incident"
+        is_predicted = 0
+        prediction_confidence = 0.0
         try:
             conn, _ = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT title FROM incidents WHERE id = ?", (incident_id,))
+            cursor.execute(
+                "SELECT title, is_predicted, prediction_confidence FROM incidents WHERE id = ?",
+                (incident_id,),
+            )
             row = cursor.fetchone()
             conn.close()
             if row:
                 incident_title = row[0]
+                is_predicted = row[1] if row[1] is not None else 0
+                prediction_confidence = row[2] if row[2] is not None else 0.0
                 title_lower = incident_title.lower()
                 if "cpu" in title_lower:
                     incident_type = "cpu_high"
@@ -262,6 +269,8 @@ class RecommendationAgent:
             "avg_effectiveness": avg_effectiveness,
             "recommendation_score": recommendation_score,
             "match_tier": match_tier,
+            "is_predicted": is_predicted,
+            "prediction_confidence": prediction_confidence,
             "evidence": {
                 "similar_incidents_count": len(similar_cases),
                 "actions_evaluated": actions_evaluated,

@@ -75,14 +75,15 @@ class MonitoringAgent:
                 log.error("monitoring_agent.simulation_trigger_read_failed", error=str(e))
         else:
             # Automatic scenario simulation if no file trigger exists
-            # Scenario 1: CPU spike every 15 cycles
-            if cycle % 15 == 0:
-                cpu = 95.0
-                log.info("monitoring_agent.simulating_cpu_spike")
-            # Scenario 2: Memory OOM and Restarts every 20 cycles
-            elif cycle % 20 == 0:
-                memory = 88.0
-                restarts = 6
-                log.info("monitoring_agent.simulating_oom_crash")
+            if os.environ.get("HECATE_TEST_MODE") != "true":
+                # Scenario 1: CPU spike every 15 cycles
+                if cycle % 15 == 0:
+                    cpu = 95.0
+                    log.info("monitoring_agent.simulating_cpu_spike")
+                # Scenario 2: Memory OOM and Restarts every 20 cycles
+                elif cycle % 20 == 0:
+                    memory = 88.0
+                    restarts = 6
+                    log.info("monitoring_agent.simulating_oom_crash")
 
         return {"cpu_usage": cpu, "memory_usage": memory, "restart_count": restarts}

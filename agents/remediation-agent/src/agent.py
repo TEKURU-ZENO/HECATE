@@ -188,6 +188,28 @@ class RemediationAgent:
         try:
             conn, use_pg = get_db_connection()
             cursor = conn.cursor()
+
+            # Check if this incident was predicted
+            is_predicted = 0
+            pred_conf = 0.0
+            lead_time = 0
+            if use_pg:
+                cursor.execute(
+                    "SELECT is_predicted, prediction_confidence, lead_time_seconds FROM incidents WHERE id = %s",
+                    (incident_id,),
+                )
+            else:
+                cursor.execute(
+                    "SELECT is_predicted, prediction_confidence, lead_time_seconds FROM incidents WHERE id = ?",
+                    (incident_id,),
+                )
+            row = cursor.fetchone()
+            if row:
+                is_predicted = row[0] if row[0] is not None else 0
+                pred_conf = row[1] if row[1] is not None else 0.0
+                lead_time = row[2] if row[2] is not None else 0
+
+            # Update status
             if use_pg:
                 cursor.execute(
                     "UPDATE incidents SET status = %s, resolved_at = NOW() WHERE id = %s",
@@ -199,6 +221,47 @@ class RemediationAgent:
                     (status, incident_id),
                 )
             conn.commit()
+
+            # If predicted and remediated successfully, mark as PREVENTED
+            if is_predicted and status == "remediated":
+                if use_pg:
+                    cursor.execute(
+                        "UPDATE incidents SET prediction_status = 'PREVENTED' WHERE id = %s",
+                        (incident_id,),
+                    )
+                    import uuid
+
+                    cursor.execute(
+                        """
+                        INSERT INTO prediction_outcomes (
+                            id, incident_id, prediction_confidence, lead_time_seconds, 
+                            predicted, actually_occurred
+                        ) VALUES (%s, %s, %s, %s, %s, %s)
+                        """,
+                        (str(uuid.uuid4()), incident_id, pred_conf, lead_time, True, False),
+                    )
+                else:
+                    cursor.execute(
+                        "UPDATE incidents SET prediction_status = 'PREVENTED' WHERE id = ?",
+                        (incident_id,),
+                    )
+                    import uuid
+
+                    cursor.execute(
+                        """
+                        INSERT INTO prediction_outcomes (
+                            id, incident_id, prediction_confidence, lead_time_seconds, 
+                            predicted, actually_occurred
+                        ) VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (str(uuid.uuid4()), incident_id, pred_conf, lead_time, 1, 0),
+                    )
+                conn.commit()
+                log.info(
+                    "remediation_agent.proactive_mitigation_prevented_outage",
+                    incident_id=incident_id,
+                )
+
             conn.close()
             log.info(
                 "remediation_agent.incident_status_updated", status=status, incident_id=incident_id

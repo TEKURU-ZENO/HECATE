@@ -53,6 +53,7 @@ def main():
         {"name": "dashboard-api", "path": "services/dashboard-api", "port": 8000},
         {"name": "anomaly-service", "path": "services/anomaly-service", "port": 8001},
         {"name": "policy-service", "path": "services/policy-service", "port": 8002},
+        {"name": "forecasting-service", "path": "services/forecasting-service", "port": 8003},
     ]
 
     for svc in services:
@@ -76,6 +77,7 @@ def main():
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
         {"name": "learning-agent", "path": "agents/learning-agent"},
+        {"name": "prediction-agent", "path": "agents/prediction-agent"},
     ]
 
     for ag in agents:

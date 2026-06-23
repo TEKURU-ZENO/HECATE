@@ -276,7 +276,6 @@ async def get_learning_stats():
     """)
     top_act_row = cursor.fetchone()
     top_action = top_act_row[0] if top_act_row else "None"
-
     conn.close()
     return {
         "total_incidents": count or 0,
@@ -284,6 +283,38 @@ async def get_learning_stats():
         "avg_effectiveness": round(avg_eff, 2) if avg_eff else 0.0,
         "successful_remediations": successful,
         "top_successful_action": top_action,
+    }
+
+
+@app.get("/api/v1/forecast/stats")
+async def get_forecast_stats():
+    conn, _ = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM incidents WHERE prediction_status = 'PREVENTED'")
+    prevented = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT COUNT(*) FROM incidents WHERE prediction_status = 'FALSE_POSITIVE'")
+    false_positives = cursor.fetchone()[0] or 0
+
+    total = prevented + false_positives
+    accuracy = 1.0
+    if total > 0:
+        accuracy = prevented / total
+
+    # Retrieve active predictions (status = 'NEW' or 'AWAITING_APPROVAL' and is_predicted = 1)
+    cursor.execute(
+        "SELECT * FROM incidents WHERE is_predicted = 1 AND status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED')"
+    )
+    active_rows = cursor.fetchall()
+    active_predictions = [dict(row) for row in active_rows]
+
+    conn.close()
+
+    return {
+        "incidents_prevented": prevented,
+        "prediction_accuracy": round(accuracy * 100, 1),
+        "active_predictions": active_predictions,
     }
 
 

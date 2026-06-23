@@ -49,6 +49,7 @@ def wait_for_incidents_resolve(timeout=30):
 def main():
     os.environ["HECATE_DB_ENGINE"] = "sqlite"
     os.environ["HECATE_EVENT_ENGINE"] = "sqlite"
+    os.environ["HECATE_TEST_MODE"] = "true"
     print("[E2E Test] Starting end-to-end self-healing pipeline verification...")
 
     # 1. Clean previous database states to start fresh
@@ -77,6 +78,7 @@ def main():
         {"name": "dashboard-api", "path": "services/dashboard-api", "port": 8000},
         {"name": "anomaly-service", "path": "services/anomaly-service", "port": 8001},
         {"name": "policy-service", "path": "services/policy-service", "port": 8002},
+        {"name": "forecasting-service", "path": "services/forecasting-service", "port": 8003},
     ]
 
     for svc in services:
@@ -100,6 +102,7 @@ def main():
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
         {"name": "learning-agent", "path": "agents/learning-agent"},
+        {"name": "prediction-agent", "path": "agents/prediction-agent"},
     ]
 
     for ag in agents:
@@ -502,6 +505,9 @@ def main():
         )
         print("[Scenario 5] Similarity recommendation verified successfully.")
 
+        # Wait for Scenario 5 incidents to resolve before clearing the DB in Scenario 6
+        wait_for_incidents_resolve(30)
+
         # ==========================================
         # Scenario 6: Cold-Start Default Fallback
         # ==========================================
@@ -833,8 +839,136 @@ def main():
         conn.commit()
         conn.close()
 
+        # ==========================================
+        # Scenario 10: Proactive Memory Capacity Scale-Up
+        # ==========================================
+        print("\n--- Running Scenario 10: Proactive Memory Capacity Scale-Up ---")
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM approvals")
+        cursor.execute("DELETE FROM prediction_outcomes")
+        cursor.execute("UPDATE incidents SET status = 'remediated'")
+        conn.commit()
+        conn.close()
+
+        # Publish 15 metrics events simulating a linear leak (Memory increasing by 1.5% each step: 70, 71.5, 73...)
+        from hecate_events import HecateEventBus
+
+        bus = HecateEventBus()
+        for cycle in range(15):
+            event_payload = {
+                "event_id": f"s10-metric-{cycle}",
+                "event_type": "telemetry.metric",
+                "timestamp": time.time(),
+                "service_name": "payment-service",
+                "namespace": "hecate-system",
+                "metrics": {
+                    "cpu_usage": 45.0,
+                    "memory_usage": float(70.0 + cycle * 1.5),
+                    "restart_count": 0,
+                },
+            }
+            bus.publish("metrics-topic", event_payload)
+            time.sleep(0.2)
+
+        # Wait for the predicted incident to be generated
+        print("[Scenario 10] Waiting for predicted incident in database...")
+        predicted_inc = None
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM incidents WHERE is_predicted = 1 AND service_name = 'payment-service' ORDER BY detected_at DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row is not None:
+                predicted_inc = dict(row)
+                break
+            time.sleep(1.0)
+
+        assert predicted_inc is not None, "Scenario 10: No predicted incident was generated!"
         print(
-            "[E2E Test] SUCCESS: All 9 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution) verified successfully!"
+            f"[Scenario 10] Found predicted incident: ID={predicted_inc['id']} | Status={predicted_inc['status']} | Lead Time={predicted_inc['lead_time_seconds']}s | Conf={predicted_inc['prediction_confidence']}"
+        )
+        assert predicted_inc["prediction_status"] in ["PENDING", "PREVENTED"], (
+            f"Expected prediction_status PENDING or PREVENTED, got {predicted_inc['prediction_status']}"
+        )
+
+        # Wait for it to be proactively remediated
+        print("[Scenario 10] Waiting for proactive remediation to complete...")
+        remediated_proactive = False
+        for _ in range(30):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT status, prediction_status FROM incidents WHERE id = ?",
+                (predicted_inc["id"],),
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row and row[0].upper() == "REMEDIATED" and row[1] == "PREVENTED":
+                remediated_proactive = True
+                break
+            time.sleep(1.0)
+
+        assert remediated_proactive, (
+            "Scenario 10: Proactive remediation did not transition status to REMEDIATED/PREVENTED!"
+        )
+
+        # Check prediction outcomes table
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM prediction_outcomes")
+        outcomes_count = cursor.fetchone()[0]
+        conn.close()
+        assert outcomes_count > 0, "Scenario 10: No record written to prediction_outcomes!"
+        print("[Scenario 10] Proactive memory capacity scale-up verified successfully.")
+
+        # ==========================================
+        # Scenario 11: False Positive Protection
+        # ==========================================
+        print("\n--- Running Scenario 11: False Positive Protection ---")
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM incidents WHERE service_name = 'order-service'")
+        conn.commit()
+        conn.close()
+
+        # Publish 15 metrics events simulating stable memory (oscillating between 70.0 and 71.0)
+        for cycle in range(15):
+            event_payload = {
+                "event_id": f"s11-metric-{cycle}",
+                "event_type": "telemetry.metric",
+                "timestamp": time.time(),
+                "service_name": "order-service",
+                "namespace": "hecate-system",
+                "metrics": {
+                    "cpu_usage": 45.0,
+                    "memory_usage": float(70.0 + (cycle % 2)),
+                    "restart_count": 0,
+                },
+            }
+            bus.publish("metrics-topic", event_payload)
+            time.sleep(0.2)
+
+        # Wait and verify that no order-service incident is created
+        print("[Scenario 11] Waiting to verify no predicted incident is generated...")
+        time.sleep(5.0)
+
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM incidents WHERE service_name = 'order-service'")
+        order_inc_count = cursor.fetchone()[0]
+        conn.close()
+
+        assert order_inc_count == 0, (
+            f"Scenario 11: Expected 0 incidents for order-service, but found {order_inc_count}!"
+        )
+        print("[Scenario 11] False positive protection verified successfully.")
+
+        print(
+            "[E2E Test] SUCCESS: All 11 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution, 10: Proactive Mitigation, 11: False Positive Protection) verified successfully!"
         )
         sys.exit(0)
 

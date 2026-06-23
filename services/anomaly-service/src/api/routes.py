@@ -44,14 +44,27 @@ def run_anomaly_listener():
 
                 incident_id = f"INC-{uuid.uuid4().hex[:8].upper()}"
                 code = f"HEC-{uuid.uuid4().hex[:6].upper()}"
-                title = f"{anomaly.get('anomaly_type').replace('_', ' ').capitalize()} in {anomaly.get('service_name')}"
+                is_predicted = 1 if anomaly.get("predicted") else 0
+                pred_conf = float(anomaly.get("confidence", 0.0))
+                pred_model = anomaly.get("model", "none")
+                lead_time = int(anomaly.get("lead_time_seconds", 0))
+                pred_status = "PENDING" if is_predicted else "NONE"
+
+                prefix = "Predicted: " if is_predicted else ""
+                title = f"{prefix}{anomaly.get('anomaly_type').replace('_', ' ').capitalize()} in {anomaly.get('service_name')}"
                 severity = "critical" if anomaly.get("anomaly_type") == "cpu_high" else "high"
                 status = "NEW"
 
                 # Insert incident
                 if use_pg:
                     cursor.execute(
-                        "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, root_cause, confidence_score, detected_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())",
+                        """
+                        INSERT INTO incidents (
+                            id, incident_code, title, severity, status, service_name, root_cause, 
+                            confidence_score, is_predicted, prediction_confidence, 
+                            prediction_model, lead_time_seconds, prediction_status, detected_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                        """,
                         (
                             incident_id,
                             code,
@@ -59,13 +72,26 @@ def run_anomaly_listener():
                             severity,
                             status,
                             anomaly.get("service_name"),
-                            f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}",
+                            f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}"
+                            if not is_predicted
+                            else f"Predicted threshold breach: {anomaly.get('metric_name')} = {anomaly.get('current_value')}",
                             1.0,
+                            is_predicted,
+                            pred_conf,
+                            pred_model,
+                            lead_time,
+                            pred_status,
                         ),
                     )
                 else:
                     cursor.execute(
-                        "INSERT INTO incidents (id, incident_code, title, severity, status, service_name, root_cause, confidence_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        """
+                        INSERT INTO incidents (
+                            id, incident_code, title, severity, status, service_name, root_cause, 
+                            confidence_score, is_predicted, prediction_confidence, 
+                            prediction_model, lead_time_seconds, prediction_status
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
                         (
                             incident_id,
                             code,
@@ -73,8 +99,15 @@ def run_anomaly_listener():
                             severity,
                             status,
                             anomaly.get("service_name"),
-                            f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}",
+                            f"Value threshold exceeded: {anomaly.get('metric_name')} = {anomaly.get('current_value')}"
+                            if not is_predicted
+                            else f"Predicted threshold breach: {anomaly.get('metric_name')} = {anomaly.get('current_value')}",
                             1.0,
+                            is_predicted,
+                            pred_conf,
+                            pred_model,
+                            lead_time,
+                            pred_status,
                         ),
                     )
                 conn.commit()
@@ -90,6 +123,11 @@ def run_anomaly_listener():
                     "service_name": anomaly.get("service_name"),
                     "namespace": anomaly.get("namespace"),
                     "anomaly_id": anomaly.get("id"),
+                    "is_predicted": is_predicted,
+                    "prediction_confidence": pred_conf,
+                    "prediction_model": pred_model,
+                    "lead_time_seconds": lead_time,
+                    "prediction_status": pred_status,
                     "timestamp": time.time(),
                 }
                 bus.publish("incident-topic", incident_payload)

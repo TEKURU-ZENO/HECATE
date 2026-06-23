@@ -19,6 +19,11 @@ export default function DashboardPage() {
     successful_remediations: 0,
     top_successful_action: "None"
   });
+  const [forecastStats, setForecastStats] = useState<any>({
+    incidents_prevented: 0,
+    prediction_accuracy: 100.0,
+    active_predictions: []
+  });
   
   const fetchDashboardData = async () => {
     try {
@@ -28,7 +33,7 @@ export default function DashboardPage() {
         setIncidents(incs);
         
         // Compute overall system health from open incidents
-        const openIncs = incs.filter((i: any) => i.status === 'open' || i.status === 'investigating');
+        const openIncs = incs.filter((i: any) => i.status === 'open' || i.status === 'investigating' || i.status === 'AWAITING_APPROVAL' || i.status === 'NEW' || i.status === 'INVESTIGATING');
         if (openIncs.some((i: any) => i.severity === 'critical')) {
           setSystemHealth('Critical');
         } else if (openIncs.length > 0) {
@@ -55,6 +60,9 @@ export default function DashboardPage() {
 
       const statsRes = await fetch('http://localhost:8000/api/v1/learning/stats');
       if (statsRes.ok) setLearningStats(await statsRes.json());
+
+      const foreStatsRes = await fetch('http://localhost:8000/api/v1/forecast/stats');
+      if (foreStatsRes.ok) setForecastStats(await foreStatsRes.json());
       
     } catch (e) {
       console.warn('Dashboard REST API not reachable yet. Using simulated feed.');
@@ -108,6 +116,43 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-xs text-green-400 font-medium font-mono">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           ACTIVE LOOP
+        </div>
+      </div>
+
+      {/* Hero Metrics Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPI 1: SYSTEM HEALTH */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-4 flex flex-col justify-between backdrop-blur-md">
+          <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider block">System Health</span>
+          <span className={`text-xl font-bold mt-1 flex items-center gap-1.5 ${
+            systemHealth === 'Healthy' ? 'text-green-400' : 'text-amber-400'
+          }`}>
+            <Activity className="w-4 h-4" />
+            {systemHealth}
+          </span>
+        </div>
+        {/* KPI 2: TOTAL INCIDENTS */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-4 flex flex-col justify-between backdrop-blur-md">
+          <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider block">Total Incidents</span>
+          <span className="text-xl font-bold text-white mt-1">{incidents.length}</span>
+        </div>
+        {/* KPI 3: INCIDENTS PREVENTED */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl" />
+          <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider block">Incidents Prevented</span>
+          <span className="text-xl font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
+            <Shield className="w-4 h-4 animate-pulse" />
+            {forecastStats.incidents_prevented}
+          </span>
+        </div>
+        {/* KPI 4: PREDICTION ACCURACY */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-16 h-16 bg-indigo-500/10 rounded-full blur-xl" />
+          <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider block">Prediction Accuracy</span>
+          <span className="text-xl font-bold text-indigo-400 mt-1 flex items-center gap-1.5">
+            <Brain className="w-4 h-4" />
+            {forecastStats.incidents_prevented === 0 && forecastStats.prediction_accuracy === 100.0 ? "N/A" : `${forecastStats.prediction_accuracy}%`}
+          </span>
         </div>
       </div>
 
@@ -524,6 +569,93 @@ export default function DashboardPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* PREDICTIVE ANALYTICS & CAPACITY FORECASTING CARD */}
+        <div className="rounded-xl border border-white/8 bg-surface-800/40 p-6 backdrop-blur-md md:col-span-2">
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-indigo-400 animate-pulse" />
+              <span className="text-xs font-semibold text-white/30 uppercase tracking-wider block">Predictive Analytics & Capacity Forecasting</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/25 text-[10px] text-indigo-300 font-mono font-bold">
+              FORECAST ENGINE ACTIVE
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            <span className="text-[11px] font-semibold text-white/50 block">Active Telemetry Forecast Timelines</span>
+            {!forecastStats.active_predictions || forecastStats.active_predictions.length === 0 ? (
+              <div className="text-center py-8 text-xs text-white/20 border border-dashed border-white/5 rounded-lg font-mono">
+                No capacity threshold breaches predicted in the current sliding window.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {forecastStats.active_predictions.map((pred: any) => {
+                  const curVal = pred.root_cause && pred.root_cause.includes("=") ? parseFloat(pred.root_cause.split("=")[1]) : 78.0;
+                  const threshold = pred.title.toLowerCase().includes("memory") ? 85.0 : 90.0;
+                  const leadTimeMins = Math.ceil(pred.lead_time_seconds / 60);
+
+                  return (
+                    <div key={pred.id} className="p-4 rounded-lg bg-black/20 border border-white/5 font-mono text-[11px] space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 text-[9px] font-bold">
+                            {pred.prediction_model.toUpperCase()}
+                          </span>
+                          <span className="text-white font-bold">{pred.title}</span>
+                        </div>
+                        <div className="text-[10px] text-white/40">
+                          Lead Time: <span className="text-amber-400 font-bold">{leadTimeMins} mins</span> · Confidence: <span className="text-indigo-400 font-bold">{(pred.prediction_confidence * 100).toFixed(0)}%</span>
+                        </div>
+                      </div>
+
+                      {/* Visual Timeline Overlay Chart using HTML/CSS */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[9px] text-white/35 uppercase">
+                          <span>Current: {curVal}%</span>
+                          <span className="text-red-400 font-bold">Threshold Limit: {threshold}%</span>
+                          <span>Projected: {pred.prediction_confidence > 0 ? (curVal + pred.prediction_confidence * 10).toFixed(1) : curVal}%</span>
+                        </div>
+                        
+                        <div className="h-6 bg-white/2 border border-white/5 rounded-md relative overflow-hidden flex items-center px-2">
+                          {/* Shaded Confidence Interval Bands */}
+                          <div className="absolute top-0 bottom-0 bg-indigo-500/10" style={{ 
+                            left: `${Math.max(0, curVal - 4)}%`, 
+                            right: `${100 - Math.min(100, curVal + pred.prediction_confidence * 15 + 4)}%` 
+                          }} />
+                          
+                          {/* Linear Trend Forecast Arrow */}
+                          <div className="absolute h-0.5 bg-indigo-500/30" style={{ 
+                            left: `${curVal}%`, 
+                            width: `${pred.prediction_confidence * 15}%` 
+                          }} />
+                          
+                          {/* Threshold Warning Line */}
+                          <div className="absolute top-0 bottom-0 w-0.5 bg-red-500" style={{ left: `${threshold}%` }} />
+                          <div className="absolute top-0 bottom-0 bg-red-500/10" style={{ left: `${threshold}%`, right: 0 }} />
+
+                          {/* Current Value Node */}
+                          <div className="absolute w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_#fff] z-10 animate-pulse" style={{ left: `${curVal}%`, marginLeft: '-5px' }} />
+
+                          {/* Projected Value Node */}
+                          <div className="absolute w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8] z-10" style={{ 
+                            left: `${Math.min(99, curVal + pred.prediction_confidence * 15)}%`, 
+                            marginLeft: '-5px' 
+                          }} />
+                        </div>
+                        <div className="flex justify-between text-[8px] text-white/20">
+                          <span>Timeline Start</span>
+                          <span>Breach Point</span>
+                          <span>Timeline End (+15 cycles)</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

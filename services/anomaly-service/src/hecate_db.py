@@ -76,6 +76,11 @@ def get_db_connection():
             root_cause TEXT,
             confidence_score REAL,
             risk_score REAL,
+            is_predicted INTEGER DEFAULT 0,
+            prediction_confidence REAL DEFAULT 0.0,
+            prediction_model TEXT DEFAULT 'none',
+            lead_time_seconds INTEGER DEFAULT 0,
+            prediction_status TEXT DEFAULT 'NONE',
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             resolved_at TIMESTAMP,
             recovery_time_seconds INTEGER
@@ -86,6 +91,32 @@ def get_db_connection():
         conn.commit()
     except Exception:
         pass
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN is_predicted INTEGER DEFAULT 0")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN prediction_confidence REAL DEFAULT 0.0")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN prediction_model TEXT DEFAULT 'none'")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN lead_time_seconds INTEGER DEFAULT 0")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN prediction_status TEXT DEFAULT 'NONE'")
+        conn.commit()
+    except Exception:
+        pass
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS remediations (
             id TEXT PRIMARY KEY,
@@ -154,6 +185,17 @@ def get_db_connection():
             requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             decided_at TIMESTAMP,
             decided_by TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prediction_outcomes (
+            id TEXT PRIMARY KEY,
+            incident_id TEXT,
+            prediction_confidence REAL,
+            lead_time_seconds INTEGER,
+            predicted BOOLEAN,
+            actually_occurred BOOLEAN,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
