@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **HECATE v2.0 — Autonomous Infrastructure Simulation & Planning** (Major Upgrade)
+  - Standalone `digital-twin-service` (port 8006) for multi-cloud, multi-cluster sequence simulations, custom confidence metrics, and post-execution reality calibration loop.
+  - New `simulation-agent` that matches playbooks, queries digital twin simulations, and calculates `TwinScore`.
+  - Upgraded `policy-service` to parse declarative YAML constraints and evaluate actions (`approve`, `reject`, `escalate`) OPA-style.
+  - Upgraded `decision-agent` executing risk calculations post-simulation and enforcing a new **Execution Validator** check (verifying target liveness, topology freshness, and auto-resolution).
+  - Upgraded `recommendation-agent` utilizing Adaptive Policy Learning via Temporal Difference (TD) Q-value updates from learning feedback.
+  - Upgraded `copilot-service` isolating a `PlanningEngine` to generate markdown comparison tables for recovery strategies.
+  - React Vite **Twin Explorer Dashboard UI** page `/twin` displaying multi-cluster mapping, side-by-side states, and calibration control panel.
+  - Complete monorepo database schema expansion supporting `twin_memory` and `playbook_q_values` tables.
+  - 7 new E2E verification scenarios (Scenarios 19–25) covering twin simulation, policy checks, TD learning, planning engine QA, accuracy calculations, feedback calibration, and plan comparisons.
+
 ### In Progress
 - Monitoring Agent: Prometheus scrape loop, Kubernetes event watcher
 - Detection Agent: Rule-based engine skeleton

@@ -23,14 +23,70 @@ class RecommendationAgent:
         self._running = True
         log.info("recommendation_agent.started")
 
-        # Subscribe to rca-topic
-        for rca_event in self.event_bus.subscribe(["rca-topic"], group_id="recommendation-group"):
+        # Subscribe to rca-topic and learning-topic
+        for event in self.event_bus.subscribe(["rca-topic", "learning-topic"], group_id="recommendation-group"):
             if not self._running:
                 break
             try:
-                await self.process_rca_event(rca_event)
+                if event.get("event_type") == "learning.feedback":
+                    await self.process_learning_feedback(event)
+                else:
+                    await self.process_rca_event(event)
             except Exception as e:
-                log.error("recommendation_agent.rca_processing_failed", error=str(e))
+                log.error("recommendation_agent.processing_failed", error=str(e))
+
+    def get_q_value(self, state_key: str, action_name: str) -> float:
+        try:
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT q_value FROM playbook_q_values WHERE state_key = ? AND action_name = ?",
+                (state_key, action_name)
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                return float(row[0])
+        except Exception as e:
+            log.error("recommendation_agent.get_q_value_failed", error=str(e))
+        return 0.0
+
+    def update_q_value(self, state_key: str, action_name: str, reward: float):
+        alpha = 0.1
+        current_q = self.get_q_value(state_key, action_name)
+        new_q = current_q + alpha * (reward - current_q)
+        
+        try:
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO playbook_q_values (state_key, action_name, q_value) 
+                VALUES (?, ?, ?)
+                ON CONFLICT(state_key, action_name) DO UPDATE SET q_value = excluded.q_value
+                """,
+                (state_key, action_name, float(new_q))
+            )
+            conn.commit()
+            conn.close()
+            log.info("recommendation_agent.q_value_updated", state_key=state_key, action=action_name, old_q=current_q, new_q=new_q)
+        except Exception as e:
+            log.error("recommendation_agent.update_q_value_failed", error=str(e))
+
+    async def process_learning_feedback(self, event: dict) -> None:
+        incident_type = event.get("incident_type")
+        remediation_action = event.get("remediation_action")
+        effectiveness_score = event.get("effectiveness_score", 0.0)
+
+        log.info(
+            "recommendation_agent.processing_learning_feedback",
+            incident_type=incident_type,
+            action=remediation_action,
+            reward=effectiveness_score
+        )
+
+        # Update Q-value
+        self.update_q_value(incident_type, remediation_action, effectiveness_score)
 
     async def process_rca_event(self, rca_event: dict) -> None:
         incident_id = rca_event.get("incident_id")
@@ -73,15 +129,16 @@ class RecommendationAgent:
             type=incident_type,
         )
 
-        # 2. Multi-tiered search on operational_memory
-        match_tier = 3
+        # 2. Multi-tiered search on operational_memory & Graph Service neighbors
+        match_tier = 4
         similar_cases = []
+        resolved_tier = None
 
         try:
             conn, _ = get_db_connection()
             cursor = conn.cursor()
 
-            # Tier 1: Exact Match (type & root cause)
+            # Tier 1: Exact Match (type & root cause in DB)
             cursor.execute(
                 """
                 SELECT remediation_action, success, recovery_time_seconds, effectiveness_score 
@@ -92,13 +149,49 @@ class RecommendationAgent:
             )
             rows = cursor.fetchall()
             if rows:
-                match_tier = 1
+                resolved_tier = 1
                 similar_cases = [dict(r) for r in rows]
                 log.info(
                     "recommendation_agent.similarity_match_found", tier=1, count=len(similar_cases)
                 )
-            else:
-                # Tier 2: Partial Match (type only)
+            conn.close()
+        except Exception as e:
+            log.error("recommendation_agent.db_query_failed", error=str(e))
+
+        # Tier 2: Graph-Aware Neighbor Match / Dependency Match
+        if not resolved_tier:
+            try:
+                res = httpx.get(
+                    "http://localhost:8005/api/v1/graph/recommendations",
+                    params={"service": root_cause_service, "incident_type": incident_type},
+                    timeout=2.0
+                )
+                if res.status_code == 200:
+                    neighbor_recs = res.json()
+                    if neighbor_recs:
+                        resolved_tier = 2
+                        similar_cases = [
+                            {
+                                "remediation_action": r["playbook"],
+                                "success": 1,
+                                "recovery_time_seconds": 10,
+                                "effectiveness_score": r.get("success_rate", 0.9)
+                            }
+                            for r in neighbor_recs
+                        ]
+                        log.info(
+                            "recommendation_agent.similarity_match_found",
+                            tier=2,
+                            count=len(similar_cases)
+                        )
+            except Exception as ge:
+                log.warn("recommendation_agent.graph_recommendations_failed", error=str(ge))
+
+        # Tier 3: Partial Match (type only in DB)
+        if not resolved_tier:
+            try:
+                conn, _ = get_db_connection()
+                cursor = conn.cursor()
                 cursor.execute(
                     """
                     SELECT remediation_action, success, recovery_time_seconds, effectiveness_score 
@@ -109,17 +202,18 @@ class RecommendationAgent:
                 )
                 rows = cursor.fetchall()
                 if rows:
-                    match_tier = 2
+                    resolved_tier = 3
                     similar_cases = [dict(r) for r in rows]
                     log.info(
                         "recommendation_agent.similarity_match_found",
-                        tier=2,
+                        tier=3,
                         count=len(similar_cases),
                     )
+                conn.close()
+            except Exception as e:
+                log.error("recommendation_agent.db_query_failed", error=str(e))
 
-            conn.close()
-        except Exception as e:
-            log.error("recommendation_agent.db_query_failed", error=str(e))
+        match_tier = resolved_tier if resolved_tier else 4
 
         # 3. Evaluate candidate actions
         recommended_action = "restart_pod"  # Baseline default
@@ -146,8 +240,10 @@ class RecommendationAgent:
             for act, stats in grouped.items():
                 p = stats["successes"] / stats["total"]
                 e = stats["sum_eff"] / stats["total"]
-                # Weighted score formula: R = 0.7*P + 0.3*E
-                r = round(0.7 * p + 0.3 * e, 4)
+                q_val = self.get_q_value(incident_type, act)
+                
+                # Combined score: R = 0.5*P + 0.2*E + 0.3*Q
+                r = round(0.5 * p + 0.2 * e + 0.3 * q_val, 4)
 
                 scored_actions.append(
                     {
@@ -191,7 +287,6 @@ class RecommendationAgent:
                     "recommendation_agent.policy_service_unreachable_using_hardcoded_defaults",
                     error=str(pe),
                 )
-                # Fallback to sqlite policies directly
                 try:
                     conn, _ = get_db_connection()
                     cursor = conn.cursor()
@@ -204,12 +299,14 @@ class RecommendationAgent:
                 except Exception:
                     pass
 
+            q_val = self.get_q_value(incident_type, recommended_action)
+            recommendation_score = round(0.7 * 1.0 + 0.3 * q_val, 4)
             actions_evaluated = [
                 {
                     "action": recommended_action,
                     "success_rate": 1.0,
                     "avg_effectiveness": 1.0,
-                    "score": 1.0,
+                    "score": recommendation_score,
                     "count": 0,
                 }
             ]
@@ -251,6 +348,45 @@ class RecommendationAgent:
             conn.commit()
             conn.close()
             log.info("recommendation_agent.persisted_to_db", incident_id=incident_id)
+
+            # Sync Recommendation, Playbook, and edges to graph-service
+            try:
+                httpx.post("http://localhost:8005/api/v1/graph/node", json={
+                    "label": "Recommendation",
+                    "id": rec_id,
+                    "properties": {
+                        "action": recommended_action,
+                        "score": recommendation_score,
+                        "match_tier": match_tier,
+                        "created_at": time.time()
+                    }
+                }, timeout=2.0)
+                
+                httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+                    "from_label": "Recommendation",
+                    "from_key": rec_id,
+                    "to_label": "Incident",
+                    "to_key": incident_id,
+                    "rel_type": "RECOMMENDED_FOR"
+                }, timeout=2.0)
+                
+                httpx.post("http://localhost:8005/api/v1/graph/node", json={
+                    "label": "Playbook",
+                    "id": recommended_action,
+                    "properties": {
+                        "name": recommended_action
+                    }
+                }, timeout=2.0)
+                
+                httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+                    "from_label": "Playbook",
+                    "from_key": recommended_action,
+                    "to_label": "Service",
+                    "to_key": root_cause_service,
+                    "rel_type": "EXECUTED_ON"
+                }, timeout=2.0)
+            except Exception as ge:
+                log.warn("recommendation_agent.graph_sync_failed", error=str(ge))
         except Exception as dbe:
             log.error("recommendation_agent.persisting_failed", error=str(dbe))
 

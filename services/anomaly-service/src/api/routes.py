@@ -42,6 +42,24 @@ def run_anomaly_listener():
                 conn, use_pg = get_db_connection()
                 cursor = conn.cursor()
 
+                # Deduplicate/suppress duplicate active incidents for same service and type
+                is_predicted = 1 if anomaly.get("predicted") else 0
+                if use_pg:
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM incidents WHERE service_name = %s AND is_predicted = %s AND status NOT IN ('remediated', 'closed', 'failed', 'rejected', 'REMEDIATED', 'CLOSED', 'FAILED', 'REJECTED')",
+                        (anomaly.get("service_name"), is_predicted)
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM incidents WHERE service_name = ? AND is_predicted = ? AND status NOT IN ('remediated', 'closed', 'failed', 'rejected', 'REMEDIATED', 'CLOSED', 'FAILED', 'REJECTED')",
+                        (anomaly.get("service_name"), is_predicted)
+                    )
+                active_count = cursor.fetchone()[0]
+                if active_count > 0:
+                    log.info("anomaly_service.duplicate_anomaly_suppressed", service=anomaly.get("service_name"), is_predicted=is_predicted)
+                    conn.close()
+                    continue
+
                 incident_id = f"INC-{uuid.uuid4().hex[:8].upper()}"
                 code = f"HEC-{uuid.uuid4().hex[:6].upper()}"
                 is_predicted = 1 if anomaly.get("predicted") else 0

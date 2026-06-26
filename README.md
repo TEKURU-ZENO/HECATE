@@ -1,5 +1,4 @@
 # HECATE — Heuristic Engine for Cloud Automation, Telemetry & Execution
-
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![Platform](https://img.shields.io/badge/Platform-Kubernetes-blue)
@@ -7,15 +6,10 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi)
 ![Kafka](https://img.shields.io/badge/Apache_Kafka-3.6-231F20?logo=apachekafka)
-
 > **An Autonomous AI-Native Cloud Reliability Platform for Self-Healing Infrastructure**
-
 HECATE continuously monitors Kubernetes-based cloud infrastructure, detects anomalies in real time, performs root cause analysis, and autonomously remediates incidents — reducing MTTR from hours to seconds.
-
 ---
-
 ## Table of Contents
-
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Key Features](#key-features)
@@ -28,15 +22,10 @@ HECATE continuously monitors Kubernetes-based cloud infrastructure, detects anom
 - [Security](#security)
 - [License](#license)
 - [Author](#author)
-
 ---
-
 ## Overview
-
 Modern cloud-native applications running on Kubernetes are complex, dynamic, and failure-prone. Site reliability engineers (SREs) spend significant portions of their time triaging incidents, correlating metrics, and executing the same remediation playbooks repeatedly. This reactive posture creates alert fatigue, slows down MTTR, and introduces human error.
-
 **HECATE** solves this problem by bringing autonomous intelligence to cloud reliability engineering. It is a multi-agent AI system that:
-
 1. **Observes** — Continuously ingests telemetry (metrics, logs, traces, events) from your Kubernetes clusters via Prometheus, Loki, and the Kubernetes API server.
 2. **Detects** — Applies rule-based and ML-driven (Isolation Forest, LSTM autoencoders) anomaly detection to identify deviations from baseline behavior before they become incidents.
 3. **Diagnoses** — Uses a graph-based root cause analysis (RCA) engine that traverses the service dependency graph to pinpoint the origin of failures with high confidence.
@@ -44,15 +33,10 @@ Modern cloud-native applications running on Kubernetes are complex, dynamic, and
 5. **Remediates** — Autonomously executes safe, audited remediation actions against the Kubernetes API (pod restarts, scaling, rollbacks, resource adjustments) or escalates to the on-call engineer.
 6. **Learns** — Closes the feedback loop by recording remediation outcomes, updating the confidence model, and continuously improving detection and decision quality.
 7. **Reports** — Generates structured incident reports with full audit trails, RCA summaries, and MTTR metrics for compliance and continuous improvement.
-
 HECATE is designed from the ground up to be cloud-native, event-driven, observable, and extensible.
-
 ---
-
 ## Architecture
-
 HECATE is organized into **7 functional layers**, each implemented as one or more independent microservices communicating over Apache Kafka:
-
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          HECATE PLATFORM ARCHITECTURE                       │
@@ -99,66 +83,38 @@ HECATE is organized into **7 functional layers**, each implemented as one or mor
 │  └──────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
-
                     ←──────── Apache Kafka Event Bus ────────→
                     ←──────── OpenTelemetry (OTEL) ──────────→
 ```
-
 ### Event Flow
-
 ```
-K8s Cluster ──► Monitoring Agent ──► [metrics-topic] ──► Detection Agent
-                                                              │
-                                                    [anomaly-topic]
-                                                              │
-                                                         RCA Agent
-                                                              │
-                                                      [rca-topic]
-                                                              │
-                                                      Decision Agent
-                                                              │
-                                                    [decision-topic]
-                                                              │
-                                                   Remediation Agent ──► K8s API
-                                                              │
-                                                   [remediation-topic]
-                                                              │
-                                                    Learning Agent
-                                                    Reporting Agent
+K8s Cluster ──► Monitoring Agent ──► [metrics-topic] ──► Detection Agent ──► [anomaly-topic] ──► RCA Agent ──► [rca-topic] ──► Recommendation Agent ──► [recommendation-topic] ──► Simulation Agent ──► [simulation-topic] ──► Decision Agent ──► [decision-topic] ──► Remediation Agent ──► K8s API
+                                                                                                                                                                                                                                                                          │
+                                                                                                                                                                                                                                                                [remediation-topic]
+                                                                                                                                                                                                                                                                          │
+                                                                                                                                                                                                                                                                Learning Agent ──► [learning-topic] ──► Rec Agent (TD Update)
+                                                                                                                                                                                                                                                                Reporting Agent
 ```
-
 ---
-
 ## Key Features
-
 ### 🤖 Autonomous Remediation
 HECATE can execute a library of remediation actions (pod restarts, HPA scaling, rollbacks, resource quota adjustments) entirely without human intervention, governed by configurable risk policies.
-
 ### 🔍 Multi-Modal Anomaly Detection
 Combines statistical baselines, rule-based thresholds, Isolation Forest (unsupervised), and LSTM autoencoders for time-series anomaly detection across CPU, memory, latency, and error rate signals.
-
 ### 🌐 Graph-Based Root Cause Analysis
 Builds a real-time service dependency graph from Kubernetes metadata and traces, then traverses it using a correlation-based propagation algorithm to identify the true root cause of failures.
-
 ### 🧠 Multi-Agent Architecture
 Seven specialized AI agents collaborate over an event-driven Kafka bus, each owning a specific slice of the reliability lifecycle. Agents are independently deployable, scalable, and fault-tolerant.
-
 ### 📋 Policy-Governed Decisions
 A declarative policy engine governs all automated actions. Policies define conditions, risk thresholds, and allowed actions — ensuring HECATE operates within safe operational boundaries at all times.
-
 ### 📊 Full Observability
 Every agent action, decision, and remediation is captured in an immutable audit log. OpenTelemetry spans correlate actions across the entire pipeline. Pre-built Grafana dashboards surface MTTR, incident trends, and model accuracy.
-
 ### 🔁 Continuous Learning
 Post-incident feedback (was the remediation successful? did the anomaly recur?) is fed back into the model training pipeline, continuously improving detection precision and reducing false positives.
-
 ### 🔒 Enterprise Security
 Mutual TLS between services, RBAC enforced at the API and Kubernetes levels, secret management via HashiCorp Vault, and full audit trails satisfy enterprise compliance requirements.
-
 ---
-
 ## Technology Stack
-
 | Layer | Technology | Purpose |
 |---|---|---|
 | **Infrastructure** | AWS EKS, Terraform, Helm, ArgoCD | Kubernetes runtime, IaC, GitOps |
@@ -170,11 +126,8 @@ Mutual TLS between services, RBAC enforced at the API and Kubernetes levels, sec
 | **Frontend** | React 18, TypeScript, Vite, Recharts | Dashboard UI, real-time updates |
 | **GitOps** | ArgoCD, GitHub Actions | Continuous delivery, CI |
 | **Security** | HashiCorp Vault, cert-manager, OPA | Secrets, TLS, policy enforcement |
-
 ---
-
 ## Repository Structure
-
 ```
 HECATE/
 ├── README.md                          # This file
@@ -248,13 +201,9 @@ HECATE/
     ├── mlops/                         # ML model lifecycle
     └── security/                      # Threat model, security controls
 ```
-
 ---
-
 ## Quick Start
-
 ### Prerequisites
-
 | Requirement | Version | Installation |
 |---|---|---|
 | Docker Desktop | 24.x+ | [docs.docker.com](https://docs.docker.com/get-docker/) |
@@ -263,43 +212,31 @@ HECATE/
 | Node.js | 20 LTS | [nodejs.org](https://nodejs.org/) |
 | kubectl | 1.28+ | [kubernetes.io](https://kubernetes.io/docs/tasks/tools/) |
 | make | Any | Bundled with Linux/macOS, [GnuWin32](http://gnuwin32.sourceforge.net/packages/make.htm) on Windows |
-
 ### 1. Clone the Repository
-
 ```bash
 git clone https://github.com/devmehta/hecate.git
 cd hecate
 ```
-
 ### 2. Configure Environment
-
 ```bash
 cp .env.example .env
 # Edit .env with your configuration values
 # At minimum, set strong passwords for POSTGRES_PASSWORD, REDIS_PASSWORD, JWT_SECRET_KEY
 ```
-
 ### 3. Start the Local Dev Stack
-
 ```bash
 docker-compose up -d
 ```
-
 Wait for all services to become healthy (approximately 60–90 seconds):
-
 ```bash
 docker-compose ps
 ```
-
 ### 4. Start the Agent Pipeline
-
 ```bash
 make install   # Install Python dependencies
 make dev       # Start all HECATE agents (development mode)
 ```
-
 ### 5. Access the Services
-
 | Service | URL | Credentials |
 |---|---|---|
 | HECATE Dashboard | http://localhost:8000 | See `.env` |
@@ -308,19 +245,15 @@ make dev       # Start all HECATE agents (development mode)
 | Kafka UI | http://localhost:8080 | — |
 | Jaeger UI | http://localhost:16686 | — |
 | Kibana | http://localhost:5601 | — |
+| Digital Twin Service | http://localhost:8006 | — |
 | Elasticsearch | http://localhost:9200 | — |
-
 ### 6. Run the Test Suite
-
 ```bash
 make test
 make test-coverage
 ```
-
 ---
-
 ## Components
-
 | Component | Layer | Description | Docs |
 |---|---|---|---|
 | **Monitoring Agent** | Telemetry | Scrapes Prometheus, Kubernetes events; publishes to `metrics-topic` | [agents/monitoring](agents/monitoring/) |
@@ -330,14 +263,13 @@ make test-coverage
 | **Remediation Agent** | Remediation | Kubernetes API execution of approved actions | [agents/remediation](agents/remediation/) |
 | **Learning Agent** | Adaptation | Outcome feedback, model retraining orchestration | [agents/learning](agents/learning/) |
 | **Reporting Agent** | Reporting | Incident report generation, audit logging | [agents/reporting](agents/reporting/) |
+| **Simulation Agent** | Intelligence | Coordinates simulations and scoring between recommendations and twin | [agents/simulation-agent](agents/simulation-agent/) |
+| **Digital Twin Service** | Simulation | API service modeling cluster states and evaluating multi-action recovery plans | [services/digital-twin-service](services/digital-twin-service/) |
 | **Dashboard API** | Presentation | FastAPI BFF for the frontend | [dashboard/api](dashboard/api/) |
 | **Dashboard Frontend** | Presentation | React 18 real-time operations dashboard | [dashboard/frontend](dashboard/frontend/) |
 | **Kafka Bus** | Infrastructure | Event backbone (6 topics) | [schemas/](schemas/) |
-
 ---
-
 ## Roadmap
-
 | Phase | Timeline | Theme | Key Deliverables |
 |---|---|---|---|
 | **Phase 1** | Q3 2024 | Foundation | Repo scaffold, architecture docs, local dev stack, Kafka topics, schema definitions |
@@ -345,41 +277,25 @@ make test-coverage
 | **Phase 3** | Q1 2025 | Intelligence | Isolation Forest detection, graph-based RCA, policy engine v1, Kubernetes remediation |
 | **Phase 4** | Q2 2025 | Production Hardening | LSTM detection, MLflow integration, full Terraform/EKS deployment, mTLS, Vault |
 | **Phase 5** | Q3 2025 | Enterprise | Multi-cluster, fine-tuned LLM for RCA narratives, SLA dashboards, SOC2 readiness |
-
 See [ROADMAP.md](ROADMAP.md) and [docs/roadmap/](docs/roadmap/) for detailed phase breakdowns.
-
 ---
-
 ## Contributing
-
 We welcome contributions from the community! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting pull requests.
-
 Key guidelines:
 - Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
 - All new code must include unit tests (≥80% coverage on changed files)
 - Run `make lint` and `make test` before opening a PR
 - Reference the relevant ADR or architecture doc for significant changes
-
 ---
-
 ## Security
-
 For reporting security vulnerabilities, please see [SECURITY.md](SECURITY.md). Do **not** create public GitHub issues for security vulnerabilities.
-
 ---
-
 ## License
-
 This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
-
 ---
-
 ## Author
-
 **Dev Mehta**
 - Building HECATE as a flagship autonomous SRE platform
 - Focused on AI-native infrastructure reliability at scale
-
 ---
-
 *"The goal of HECATE is not to replace SREs, but to give them superpowers."*

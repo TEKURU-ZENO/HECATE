@@ -1,0 +1,20 @@
+policies:
+  - id: pol-db-no-migrate
+    match:
+      service_type: database
+    condition:
+      action: migrate_service
+    effect: reject
+  - id: pol-peak-hours
+    match:
+      cluster: cluster-aws-primary
+    condition:
+      traffic: peak
+      action: restart_pod
+    effect: escalate
+  - id: pol-max-replicas
+    match:
+      action: scale_deployment
+    condition:
+      replicas: ">5"
+    effect: reject

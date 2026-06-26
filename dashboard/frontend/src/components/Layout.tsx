@@ -8,6 +8,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/agents':    'Agents',
   '/policies':  'Policies',
   '/analytics': 'Analytics',
+  '/twin':      'Twin Explorer',
   '/settings':  'Settings',
   '/copilot':   'HECATE Copilot',
 };

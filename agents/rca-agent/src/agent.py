@@ -28,6 +28,21 @@ class RcaAgent:
         log.info(
             "rca_agent.initialized", nodes=list(self.graph.nodes), edges=list(self.graph.edges)
         )
+        
+        # Seed graph service topology
+        try:
+            import httpx
+            payload = []
+            services = topology_cfg.get("services", [])
+            dependencies = topology_cfg.get("dependencies", [])
+            for svc in services:
+                # Find all services this svc depends on (where it is dep[0])
+                deps = [dep[1] for dep in dependencies if dep[0] == svc]
+                payload.append({"service": svc, "depends_on": deps})
+            httpx.post("http://localhost:8005/api/v1/graph/initialize", json=payload, timeout=5.0)
+            log.info("rca_agent.seeded_graph_service_topology")
+        except Exception as ge:
+            log.warn("rca_agent.seed_graph_service_failed", error=str(ge))
 
     def _load_topology(self) -> dict:
         ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -81,48 +96,110 @@ class RcaAgent:
         except Exception as se:
             log.error("rca_agent.status_investigating_update_failed", error=str(se))
 
-        # 1. Resolve downstream dependencies using DependencyResolver
-        downstream = DependencyResolver.get_downstream_dependencies(self.graph, service_name)
-        log.info("rca_agent.downstream_resolved", service=service_name, downstream=downstream)
+        # Sync incident node and OCCURRED_ON to graph-service
+        try:
+            import httpx
+            # Sync node
+            httpx.post("http://localhost:8005/api/v1/graph/node", json={
+                "label": "Incident",
+                "id": incident_id,
+                "properties": {
+                    "status": "investigating",
+                    "service_name": service_name,
+                    "anomaly_id": anomaly_id,
+                    "created_at": time.time()
+                }
+            }, timeout=2.0)
+            
+            # Sync OCCURRED_ON edge
+            httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+                "from_label": "Incident",
+                "from_key": incident_id,
+                "to_label": "Service",
+                "to_key": service_name,
+                "rel_type": "OCCURRED_ON"
+            }, timeout=2.0)
+            
+            # Update Service status
+            httpx.post("http://localhost:8005/api/v1/graph/node", json={
+                "label": "Service",
+                "id": service_name,
+                "properties": {"status": "degraded"}
+            }, timeout=2.0)
+        except Exception as ge:
+            log.warn("rca_agent.graph_service_pre_sync_failed", error=str(ge))
 
-        # 2. Query DB to check if any downstream service has an active alert
+        # 1. Resolve downstream dependencies & root cause via Graph Service
         root_cause_service = service_name
         confidence_score = 0.70
         risk_score = 0.40
         root_cause_description = f"Self-contained alert in {service_name}."
+        resolved_via_graph = False
 
         try:
-            conn, use_pg = get_db_connection()
-            cursor = conn.cursor()
-
-            # Fetch active incidents
-            if use_pg:
-                cursor.execute(
-                    "SELECT service_name, title FROM incidents WHERE status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED') AND id != %s",
-                    (incident_id,),
-                )
-            else:
-                cursor.execute(
-                    "SELECT service_name, title FROM incidents WHERE status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED') AND id != ?",
-                    (incident_id,),
-                )
-
-            rows = cursor.fetchall()
-            conn.close()
-
-            active_services = {row[0]: row[1] for row in rows}
-            log.info("rca_agent.active_db_alerts", active_services=list(active_services.keys()))
-
-            # Cross reference downstream nodes with active database incidents
-            for ds_svc in downstream:
-                if ds_svc in active_services:
-                    root_cause_service = ds_svc
+            import httpx
+            res = httpx.get(f"http://localhost:8005/api/v1/graph/rca?service={service_name}", timeout=3.0)
+            if res.status_code == 200:
+                data = res.json()
+                retrieved_root = data.get("root_cause_service")
+                retrieved_inc = data.get("incident_id")
+                
+                if retrieved_root and retrieved_root != service_name:
+                    root_cause_service = retrieved_root
                     confidence_score = 0.95
                     risk_score = 0.85
                     root_cause_description = f"{service_name} failure caused by downstream service {root_cause_service} alert."
-                    break
-        except Exception as e:
-            log.error("rca_agent.db_query_failed_using_self", error=str(e))
+                    resolved_via_graph = True
+                    log.info("rca_agent.graph_rca_resolved", root=root_cause_service)
+                    
+                    # Link TRIGGERED relation if causal incident exists
+                    if retrieved_inc:
+                        try:
+                            httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+                                "from_label": "Incident",
+                                "from_key": retrieved_inc,
+                                "to_label": "Incident",
+                                "to_key": incident_id,
+                                "rel_type": "TRIGGERED"
+                            }, timeout=2.0)
+                        except Exception:
+                            pass
+        except Exception as ge:
+            log.error("rca_agent.graph_rca_query_failed_using_fallback", error=str(ge))
+
+        # Fallback to local NetworkX dependency resolver if graph service RCA query failed to resolve cascading roots
+        downstream = DependencyResolver.get_downstream_dependencies(self.graph, service_name)
+        if not resolved_via_graph:
+            try:
+                conn, use_pg = get_db_connection()
+                cursor = conn.cursor()
+                if use_pg:
+                    cursor.execute(
+                        "SELECT service_name, title, id FROM incidents WHERE status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED') AND id != %s",
+                        (incident_id,),
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT service_name, title, id FROM incidents WHERE status NOT IN ('remediated', 'closed', 'REMEDIATED', 'CLOSED') AND id != ?",
+                        (incident_id,),
+                    )
+
+                rows = cursor.fetchall()
+                conn.close()
+
+                active_services = {row[0]: (row[1], row[2]) for row in rows}
+                log.info("rca_agent.active_db_alerts", active_services=list(active_services.keys()))
+
+                # Cross reference downstream nodes with active database incidents
+                for ds_svc in downstream:
+                    if ds_svc in active_services:
+                        root_cause_service = ds_svc
+                        confidence_score = 0.95
+                        risk_score = 0.85
+                        root_cause_description = f"{service_name} failure caused by downstream service {root_cause_service} alert."
+                        break
+            except Exception as e:
+                log.error("rca_agent.db_query_failed_using_self", error=str(e))
 
         duration_ms = int((time.time() - start_time) * 1000)
 
@@ -145,6 +222,22 @@ class RcaAgent:
             log.info("rca_agent.db_updated", incident_id=incident_id, root_cause=root_cause_service)
         except Exception as e:
             log.error("rca_agent.db_update_failed", error=str(e))
+
+        # Sync root cause properties back to graph-service Incident node
+        try:
+            import httpx
+            httpx.post("http://localhost:8005/api/v1/graph/node", json={
+                "label": "Incident",
+                "id": incident_id,
+                "properties": {
+                    "root_cause_service": root_cause_service,
+                    "root_cause": root_cause_description,
+                    "confidence_score": confidence_score,
+                    "risk_score": risk_score
+                }
+            }, timeout=2.0)
+        except Exception:
+            pass
 
         # 4. Construct and publish RCAEvent matching schema
         affected = [service_name]

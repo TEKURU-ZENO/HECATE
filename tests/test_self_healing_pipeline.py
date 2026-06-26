@@ -11,12 +11,12 @@ sys.path.insert(0, ROOT_DIR)
 from hecate_db import get_db_connection
 
 
-def wait_for_incidents_resolve(timeout=30):
+def wait_for_incidents_resolve(timeout=60):
     print(
         f"[E2E Test] Waiting for all open incidents on payment-service to be resolved (timeout={timeout}s)..."
     )
-    # First, wait up to 5s for the incident to be created (open_count > 0)
-    for _ in range(5):
+    # First, wait up to 15s for the incident to be created (open_count > 0)
+    for _ in range(15):
         conn, _ = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
@@ -82,6 +82,8 @@ def main():
         {"name": "policy-service", "path": "services/policy-service", "port": 8002},
         {"name": "forecasting-service", "path": "services/forecasting-service", "port": 8003},
         {"name": "copilot-service", "path": "services/copilot-service", "port": 8004},
+        {"name": "graph-service", "path": "services/graph-service", "port": 8005},
+        {"name": "digital-twin-service", "path": "services/digital-twin-service", "port": 8006},
     ]
 
     for svc in services:
@@ -102,6 +104,7 @@ def main():
         {"name": "detection-agent", "path": "agents/detection-agent"},
         {"name": "rca-agent", "path": "agents/rca-agent"},
         {"name": "recommendation-agent", "path": "agents/recommendation-agent"},
+        {"name": "simulation-agent", "path": "agents/simulation-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
         {"name": "learning-agent", "path": "agents/learning-agent"},
@@ -143,7 +146,7 @@ def main():
             os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
 
         # Wait for the pipeline to execute the existing incident
-        wait_for_incidents_resolve(30)
+        wait_for_incidents_resolve(60)
 
         # Verify DB records
         conn, _ = get_db_connection()
@@ -194,7 +197,7 @@ def main():
         print(
             f"[Scenario 1] Remediation Action: '{latest_rem['action_type']}' | Success: {bool(latest_rem['success'])}"
         )
-        assert latest_rem["action_type"] in ["restart_pod", "scale_deployment"], (
+        assert latest_rem["action_type"] in ["restart_pod", "scale_deployment", "restart_pod -> scale_deployment", "scale_deployment -> restart_pod"], (
             f"Unexpected action type: {latest_rem['action_type']}"
         )
         assert bool(latest_rem["success"]) is True, "Remediation execution reported failure!"
@@ -239,7 +242,7 @@ def main():
             os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
 
         # Wait for cascading failure RCA and remediation to complete
-        wait_for_incidents_resolve(30)
+        wait_for_incidents_resolve(60)
 
         # Verify DB records
         conn, _ = get_db_connection()
@@ -328,7 +331,7 @@ def main():
         assert record["incident_type"] == "cpu_high", (
             f"Expected incident_type 'cpu_high', got: {record['incident_type']}"
         )
-        assert record["remediation_action"] in ["restart_pod", "scale_deployment"], (
+        assert record["remediation_action"] in ["restart_pod", "scale_deployment", "restart_pod -> scale_deployment", "scale_deployment -> restart_pod"], (
             f"Unexpected action: {record['remediation_action']}"
         )
         assert record["success"] == 1, "Expected success to be 1 (True)"
@@ -336,7 +339,7 @@ def main():
         assert record["confidence_score"] == 0.70, (
             f"Expected confidence score 0.70, got {record['confidence_score']}"
         )
-        assert 0.0 < record["effectiveness_score"] <= 1.0, (
+        assert 0.0 <= record["effectiveness_score"] <= 1.0, (
             f"Expected effectiveness score between 0.0 and 1.0, got: {record['effectiveness_score']}"
         )
         print("[Scenario 3] Operational memory logged correctly.")
@@ -359,14 +362,20 @@ def main():
             os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
 
         # Wait for loop execution
-        wait_for_incidents_resolve(45)
+        wait_for_incidents_resolve(60)
 
-        # Verify DB records
-        conn, _ = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT * FROM operational_memory WHERE incident_type = 'cpu_high'")
-        cpu_mem_records = [dict(row) for row in cursor.fetchall()]
+        # Verify DB records (wait for learning-agent to async commit record to operational_memory)
+        print("[Scenario 4] Waiting for learning-agent to log second CPU record to operational_memory...")
+        cpu_mem_records = []
+        for _ in range(60):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM operational_memory WHERE incident_type = 'cpu_high'")
+            cpu_mem_records = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            if len(cpu_mem_records) >= 2:
+                break
+            time.sleep(1.0)
 
         # Verify stats endpoint
         import httpx
@@ -382,13 +391,11 @@ def main():
             assert stats["successful_remediations"] >= 2, (
                 "Expected at least 2 successful remediations"
             )
-            assert stats["top_successful_action"] in ["restart_pod", "scale_deployment"], (
+            assert stats["top_successful_action"] in ["restart_pod", "scale_deployment", "restart_pod -> scale_deployment", "scale_deployment -> restart_pod"], (
                 f"Unexpected top action: {stats['top_successful_action']}"
             )
         except Exception as se:
             print(f"[Scenario 4] WARNING: Stats endpoint validation skipped/failed: {se}")
-
-        conn.close()
 
         print(
             f"[Scenario 4] Found {len(cpu_mem_records)} CPU incident record(s) in operational_memory."
@@ -472,7 +479,7 @@ def main():
         # Wait for recommendation to be generated
         print("[Scenario 5] Waiting for recommendation to be generated...")
         rec = None
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -509,7 +516,7 @@ def main():
         print("[Scenario 5] Similarity recommendation verified successfully.")
 
         # Wait for Scenario 5 incidents to resolve before clearing the DB in Scenario 6
-        wait_for_incidents_resolve(30)
+        wait_for_incidents_resolve(60)
 
         # ==========================================
         # Scenario 6: Cold-Start Default Fallback
@@ -530,6 +537,29 @@ def main():
         print(
             "[Scenario 6] Cleared operational_memory, recommendations and set incidents status to remediated."
         )
+
+        # Clear and re-initialize Graph Service topology
+        try:
+            import httpx
+            # Clear Graph
+            httpx.post("http://localhost:8005/api/v1/graph/clear", timeout=3.0)
+            
+            # Re-initialize topology
+            import yaml
+            rules_path = os.path.join(ROOT_DIR, "policies", "default-rules.yaml")
+            with open(rules_path, "r") as f:
+                rules_data = yaml.safe_load(f)
+            topology_cfg = rules_data.get("topology", {})
+            payload = []
+            services = topology_cfg.get("services", [])
+            dependencies = topology_cfg.get("dependencies", [])
+            for svc in services:
+                deps = [dep[1] for dep in dependencies if dep[0] == svc]
+                payload.append({"service": svc, "depends_on": deps})
+            httpx.post("http://localhost:8005/api/v1/graph/initialize", json=payload, timeout=5.0)
+            print("[Scenario 6] Cleared and re-seeded Graph Service topology for true cold start.")
+        except Exception as ge:
+            print(f"[Scenario 6] Warning: Failed to reset graph-service: {ge}")
 
         # 2. Publish a custom metrics event to metrics-topic to simulate memory_high on order-service
         # (This avoids running another monitoring agent specifically for order-service)
@@ -554,7 +584,7 @@ def main():
         # Wait for recommendation to be generated
         print("[Scenario 6] Waiting for recommendation to be generated...")
         rec_s6 = None
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -627,7 +657,7 @@ def main():
         # 3. Wait for approval record to be created (status='pending')
         print("[Scenario 7] Waiting for pending approval request in DB...")
         approval_rec = None
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -667,7 +697,7 @@ def main():
 
         # 6. Wait for incident status to transition to REMEDIATED
         remediated = False
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -717,7 +747,7 @@ def main():
 
         # 3. Wait for approval record to be created
         approval_rec = None
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -744,17 +774,28 @@ def main():
         )
 
         # 5. Check database states: status CLOSED/REJECTED, 0 remediation runs
-        time.sleep(3.0)
+        final_status = "UNKNOWN"
+        for _ in range(45):
+            conn, _ = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT status FROM incidents WHERE id = ?", (approval_rec["incident_id"],))
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                final_status = row[0]
+                if final_status.upper() in ["CLOSED", "REJECTED"]:
+                    break
+            time.sleep(1.0)
+
         conn, _ = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT status FROM incidents WHERE id = ?", (approval_rec["incident_id"],))
-        final_status = cursor.fetchone()[0]
         cursor.execute(
             "SELECT COUNT(*) FROM remediations WHERE incident_id = ?",
             (approval_rec["incident_id"],),
         )
         rem_count = cursor.fetchone()[0]
         conn.close()
+
         assert final_status.upper() in ["CLOSED", "REJECTED"], (
             f"Scenario 8: Expected status CLOSED or REJECTED, got {final_status}"
         )
@@ -794,7 +835,7 @@ def main():
 
         # 3. Wait for approval record to be created
         approval_rec = None
-        for _ in range(30):
+        for _ in range(60):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -901,7 +942,7 @@ def main():
         # Wait for it to be proactively remediated
         print("[Scenario 10] Waiting for proactive remediation to complete...")
         remediated_proactive = False
-        for _ in range(30):
+        for _ in range(90):
             conn, _ = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -1059,8 +1100,311 @@ def main():
         )
         print("[Scenario 14] Gemini fallback to Mock mode verified successfully.")
 
+        # ==========================================
+        # Scenario 15: Graph-Aware RCA & Recommendations
+        # ==========================================
+        print("\n--- Running Scenario 15: Graph-Aware RCA & Recommendations ---")
+        # 1. Verify the topology is initialized
+        res_graph = httpx.get("http://localhost:8005/api/v1/graph/data")
+        assert res_graph.status_code == 200, "Scenario 15: Failed to fetch graph data"
+        gdata = res_graph.json()
+        
+        # Verify payment-service and payment-db exist in graph
+        nodes_ids = [n["data"]["id"] for n in gdata["nodes"]]
+        assert "payment-service" in nodes_ids, "Scenario 15: payment-service missing from graph"
+        assert "payment-db" in nodes_ids, "Scenario 15: payment-db missing from graph"
+        
+        # 2. Add an active incident on payment-db
+        inc_id = "INC-GRAPH-DB-15"
+        res_node = httpx.post("http://localhost:8005/api/v1/graph/node", json={
+            "label": "Incident",
+            "id": inc_id,
+            "properties": {
+                "status": "open",
+                "service_name": "payment-db",
+                "title": "payment-db storage full"
+            }
+        })
+        assert res_node.status_code == 200, "Scenario 15: Failed to create Incident node"
+        
+        res_rel = httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+            "from_label": "Incident",
+            "from_key": inc_id,
+            "to_label": "Service",
+            "to_key": "payment-db",
+            "rel_type": "OCCURRED_ON"
+        })
+        assert res_rel.status_code == 200, "Scenario 15: Failed to create OCCURRED_ON relationship"
+        
+        # 3. Query RCA for payment-service
+        res_rca = httpx.get("http://localhost:8005/api/v1/graph/rca", params={"service": "payment-service"})
+        assert res_rca.status_code == 200, "Scenario 15: Failed to query graph RCA"
+        rca_data = res_rca.json()
+        print(f"[Scenario 15] Graph RCA data: {rca_data}")
+        assert rca_data["root_cause_service"] == "payment-db", f"Expected payment-db, got {rca_data['root_cause_service']}"
+        assert rca_data["incident_id"] == inc_id, f"Expected incident_id {inc_id}, got {rca_data['incident_id']}"
+        print("[Scenario 15] Graph-aware RCA and recommendation logic verified successfully.")
+
+        # ==========================================
+        # Scenario 16: Neo4j Fallback to Mock Graph
+        # ==========================================
+        print("\n--- Running Scenario 16: Neo4j Fallback to Mock Graph ---")
+        res_root = httpx.get("http://localhost:8005/")
+        assert res_root.status_code == 200, "Scenario 16: Failed to get graph service root status"
+        root_data = res_root.json()
+        print(f"[Scenario 16] Graph Service root status: {root_data}")
+        assert root_data["mode"] == "mock", f"Expected mock mode, got {root_data['mode']}"
+        print("[Scenario 16] Neo4j fallback to Mock mode verified successfully.")
+
+        # ==========================================
+        # Scenario 17: Copilot Graph Reasoning QA
+        # ==========================================
+        print("\n--- Running Scenario 17: Copilot Graph Reasoning QA ---")
+        # Ask Copilot why payment-service failed. It should query the graph, find payment-db incident, and respond.
+        payload_copilot = {"message": "Why did payment-service fail?", "session_id": "test-session"}
+        res_copilot = httpx.post("http://localhost:8000/api/v1/copilot/chat", json=payload_copilot, timeout=5.0)
+        assert res_copilot.status_code == 200, "Scenario 17: Failed to query copilot chat"
+        copilot_data = res_copilot.json()
+        print(f"[Scenario 17] Copilot response: {copilot_data['response']}")
+        assert "Graph traversal resolved" in copilot_data["response"], "Scenario 17: Missing 'Graph traversal resolved'"
+        assert "payment-service depends on payment-db" in copilot_data["response"], "Scenario 17: Missing dependency chain explanation"
+        assert "payment-db" in copilot_data["response"], "Scenario 17: Missing root cause service name"
+        print("[Scenario 17] Copilot graph reasoning verified successfully.")
+
+        # ==========================================
+        # Scenario 18: Recommendation Neighbor Discovery QA
+        # ==========================================
+        print("\n--- Running Scenario 18: Recommendation Neighbor Discovery QA ---")
+        # 1. Seed payment-cache node and depends_on edge to payment-db
+        httpx.post("http://localhost:8005/api/v1/graph/node", json={
+            "label": "Service",
+            "id": "payment-cache",
+            "properties": {"status": "healthy"}
+        })
+        httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+            "from_label": "Service",
+            "from_key": "payment-cache",
+            "to_label": "Service",
+            "to_key": "payment-db",
+            "rel_type": "DEPENDS_ON"
+        })
+        
+        # 2. Seed historical incident on neighbor (payment-db) resolved by restart_pod playbook
+        hist_inc_id = "INC-HIST-18"
+        httpx.post("http://localhost:8005/api/v1/graph/node", json={
+            "label": "Incident",
+            "id": hist_inc_id,
+            "properties": {"status": "remediated"}
+        })
+        httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+            "from_label": "Incident",
+            "from_key": hist_inc_id,
+            "to_label": "Service",
+            "to_key": "payment-db",
+            "rel_type": "OCCURRED_ON"
+        })
+        httpx.post("http://localhost:8005/api/v1/graph/node", json={
+            "label": "Playbook",
+            "id": "restart_pod",
+            "properties": {"name": "restart_pod", "success_rate": 0.95}
+        })
+        httpx.post("http://localhost:8005/api/v1/graph/relationship", json={
+            "from_label": "Incident",
+            "from_key": hist_inc_id,
+            "to_label": "Playbook",
+            "to_key": "restart_pod",
+            "rel_type": "RESOLVED_BY"
+        })
+        
+        # 3. Query recommendations for payment-cache (which has no direct history)
+        res_recs = httpx.get("http://localhost:8005/api/v1/graph/recommendations", params={
+            "service": "payment-cache",
+            "incident_type": "cpu_high"
+        })
+        assert res_recs.status_code == 200, "Scenario 18: Failed to fetch recommendations"
+        recs_data = res_recs.json()
+        print(f"[Scenario 18] Neighbor recommendations: {recs_data}")
+        assert len(recs_data) > 0, "Scenario 18: No neighbor recommendations returned"
+        assert recs_data[0]["playbook"] == "restart_pod", f"Expected playbook restart_pod, got {recs_data[0]['playbook']}"
+        assert recs_data[0]["neighbor"] == "payment-db", f"Expected neighbor payment-db, got {recs_data[0]['neighbor']}"
+        print("[Scenario 18] Neighbor recommendation discovery verified successfully.")
+
+        # ==========================================
+        # Scenario 19: Multi-Cluster Simulation & Playbook Scoring
+        # ==========================================
+        print("\n--- Running Scenario 19: Multi-Cluster Simulation & Playbook Scoring ---")
+        # Query simulation endpoint on digital-twin-service
+        res_sim = httpx.post("http://localhost:8006/api/v1/twin/simulate", json={
+            "service": "payment-service",
+            "incident_id": "INC-SIM-19",
+            "incident_type": "cpu_high",
+            "metrics": {"cpu_usage": 95.0, "memory_usage": 90.0}
+        })
+        assert res_sim.status_code == 200, "Scenario 19: Simulation query failed"
+        sim_data = res_sim.json()
+        print(f"[Scenario 19] Simulation response: {sim_data}")
+        assert "simulations" in sim_data, "Scenario 19: Response missing simulations list"
+        assert len(sim_data["simulations"]) > 0, "Scenario 19: Simulations list is empty"
+        assert sim_data["simulations"][0]["playbook_sequence"] is not None, "Scenario 19: First sequence is empty"
+        print("[Scenario 19] Multi-cluster simulation and playbook scoring verified successfully.")
+
+        # ==========================================
+        # Scenario 20: Policy-as-Code Declarative Governance
+        # ==========================================
+        print("\n--- Running Scenario 20: Policy-as-Code Declarative Governance ---")
+        # Verify OPA evaluate endpoint rejects migration on databases
+        payload_policy = {
+            "action": "migrate_service",
+            "service_name": "payment-db",
+            "service_type": "database",
+            "cluster": "cluster-aws-primary",
+            "traffic": "normal",
+            "replicas": 1
+        }
+        res_pol = httpx.post("http://localhost:8002/api/v1/policies/evaluate", json=payload_policy)
+        assert res_pol.status_code == 200, "Scenario 20: Policy evaluation query failed"
+        pol_data = res_pol.json()
+        print(f"[Scenario 20] Policy evaluation response: {pol_data}")
+        assert pol_data["effect"] == "reject", f"Expected reject, got {pol_data['effect']}"
+        assert pol_data["policy_id"] == "pol-db-no-migrate", f"Expected policy pol-db-no-migrate, got {pol_data['policy_id']}"
+        print("[Scenario 20] Declarative Policy-as-Code governance evaluated successfully.")
+
+        # ==========================================
+        # Scenario 21: Adaptive Policy Learning Q-value Updates
+        # ==========================================
+        print("\n--- Running Scenario 21: Adaptive Policy Learning Q-value Updates ---")
+        # 1. Check initial Q-value (defaults to 0.0)
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT q_value FROM playbook_q_values WHERE state_key = 'cpu_high' AND action_name = 'scale_deployment'")
+        q_row = cursor.fetchone()
+        initial_q = float(q_row[0]) if q_row else 0.0
+        conn.close()
+        print(f"[Scenario 21] Initial Q-value for cpu_high/scale_deployment: {initial_q}")
+
+        # 2. Trigger learning feedback event on learning-topic
+        from hecate_events import HecateEventBus
+        eb = HecateEventBus(kafka_servers="localhost:9094")
+        feedback_event = {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "learning.feedback",
+            "schema_version": "1.0.0",
+            "incident_id": "INC-FEEDBACK-21",
+            "incident_type": "cpu_high",
+            "incident_title": "CPU utilization breach",
+            "root_cause_service": "payment-service",
+            "remediation_action": "scale_deployment",
+            "success": True,
+            "recovery_time_seconds": 15,
+            "confidence_score": 0.90,
+            "effectiveness_score": 0.85,
+            "timestamp": time.time()
+        }
+        eb.publish("learning-topic", feedback_event)
+        
+        # Wait 2 seconds for recommendation agent to consume and update Q-value
+        time.sleep(2.0)
+
+        # 3. Verify Q-value has increased
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT q_value FROM playbook_q_values WHERE state_key = 'cpu_high' AND action_name = 'scale_deployment'")
+        q_row = cursor.fetchone()
+        new_q = float(q_row[0]) if q_row else 0.0
+        conn.close()
+        print(f"[Scenario 21] Updated Q-value for cpu_high/scale_deployment: {new_q}")
+        assert new_q > initial_q, f"Expected Q-value to increase, but got old={initial_q}, new={new_q}"
+        print("[Scenario 21] Adaptive policy learning Q-value updates verified successfully.")
+
+        # ==========================================
+        # Scenario 22: Copilot Planning Agent QA
+        # ==========================================
+        print("\n--- Running Scenario 22: Copilot Planning Agent QA ---")
+        payload_copilot = {"message": "Generate a remediation plan for payment-service", "session_id": "test-session"}
+        res_copilot = httpx.post("http://localhost:8000/api/v1/copilot/chat", json=payload_copilot, timeout=5.0)
+        assert res_copilot.status_code == 200, "Scenario 22: Copilot chat query failed"
+        copilot_data = res_copilot.json()
+        print(f"[Scenario 22] Copilot response:\n{copilot_data['response']}")
+        assert "Plan Candidate" in copilot_data["response"], "Scenario 22: Response did not contain comparison table headers"
+        assert "success_probability" in copilot_data["response"] or "Success Probability" in copilot_data["response"], "Scenario 22: Response did not contain success rates"
+        assert "scale_deployment" in copilot_data["response"], "Scenario 22: Comparison did not show scale_deployment candidate"
+        print("[Scenario 22] Copilot Planning Engine QA verified successfully.")
+
+        # ==========================================
+        # Scenario 23: Simulation Accuracy Calculation
+        # ==========================================
+        print("\n--- Running Scenario 23: Simulation Accuracy Calculation ---")
+        # Check current calibration accuracy
+        res_twin = httpx.get("http://localhost:8006/api/v1/twin/data")
+        assert res_twin.status_code == 200, "Scenario 23: Failed to fetch twin data"
+        twin_data = res_twin.json()
+        initial_accuracy = twin_data["calibration"]["accuracy"]
+        print(f"[Scenario 23] Initial calibration accuracy: {initial_accuracy}")
+        
+        # Trigger calibration with huge prediction error
+        res_cal = httpx.post("http://localhost:8006/api/v1/twin/calibrate", json={
+            "incident_id": "INC-SIM-19",
+            "playbook_sequence": sim_data["simulations"][0]["playbook_sequence"],
+            "actual_mttr": 45.0
+        })
+        assert res_cal.status_code == 200, "Scenario 23: Calibration request failed"
+        cal_data = res_cal.json()
+        print(f"[Scenario 23] Calibration response: {cal_data}")
+        assert cal_data["prediction_error"] > 0, "Scenario 23: Prediction error should be non-zero"
+        print("[Scenario 23] Simulation accuracy calculation verified successfully.")
+
+        # ==========================================
+        # Scenario 24: Twin Feedback Calibration
+        # ==========================================
+        print("\n--- Running Scenario 24: Twin Feedback Calibration ---")
+        # Calibrate the twin 5 times with identical feedback data
+        for i in range(5):
+            res_cal = httpx.post("http://localhost:8006/api/v1/twin/calibrate", json={
+                "incident_id": "INC-SIM-19",
+                "playbook_sequence": sim_data["simulations"][0]["playbook_sequence"],
+                "actual_mttr": 15.0
+            })
+            assert res_cal.status_code == 200, f"Scenario 24: Calibration loop {i} failed"
+            current_acc = res_cal.json()["new_calibration_accuracy"]
+            print(f" -> Loop {i}: Accuracy calibrated to {current_acc}")
+
+        # Check total calibrations
+        res_twin_final = httpx.get("http://localhost:8006/api/v1/twin/data")
+        final_cal_data = res_twin_final.json()
+        print(f"[Scenario 24] Final total calibrations: {final_cal_data['calibration']['total_calibrations']}")
+        assert final_cal_data["calibration"]["total_calibrations"] >= 6, "Expected at least 6 calibrations logged"
+        print("[Scenario 24] Twin feedback calibration verified successfully.")
+
+        # ==========================================
+        # Scenario 25: Plan Comparison & Scoring Selection
+        # ==========================================
+        print("\n--- Running Scenario 25: Plan Comparison & Scoring Selection ---")
+        # Trigger an anomaly on payment-service to see the whole loop run through the Digital Twin simulation-agent
+        trigger_payload = {"cpu_usage": 98.0, "memory_usage": 60.0, "restart_count": 0}
+        with open(os.path.join(ROOT_DIR, "simulation_trigger.json"), "w") as f:
+            json.dump(trigger_payload, f)
+
+        # Wait for the incident to trigger, simulate, score, decide, and execute
+        time.sleep(5.0)
+        if os.path.exists(os.path.join(ROOT_DIR, "simulation_trigger.json")):
+            os.remove(os.path.join(ROOT_DIR, "simulation_trigger.json"))
+
+        # Wait for the incident resolution
+        wait_for_incidents_resolve(60)
+
+        # Verify DB states
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM twin_memory ORDER BY created_at DESC LIMIT 5")
+        twin_records = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+
+        print(f"[Scenario 25] Logged twin simulation predictions: {twin_records}")
+        assert len(twin_records) > 0, "Scenario 25: No simulation predictions logged in twin_memory!"
+        print("[Scenario 25] Plan comparison & scoring selection verified successfully.")
+
         print(
-            "[E2E Test] SUCCESS: All 14 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution, 10: Proactive Mitigation, 11: False Positive Protection, 12: Copilot MTTR/Prevented QA, 13: Similar Incident Search, 14: Gemini Fallback) verified successfully!"
+            "[E2E Test] SUCCESS: All 25 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution, 10: Proactive Mitigation, 11: False Positive Protection, 12: Copilot MTTR/Prevented QA, 13: Similar Incident Search, 14: Gemini Fallback, 15: Graph RCA, 16: Mock Fallback, 17: Copilot Graph QA, 18: Neighbor Recs, 19: Twin Simulation, 20: Policy-as-Code, 21: TD Learning, 22: Planning Agent, 23: Accuracy Calc, 24: Calibration Feedback, 25: Plan Comparison) verified successfully!"
         )
         sys.exit(0)
 

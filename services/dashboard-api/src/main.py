@@ -335,6 +335,34 @@ async def copilot_chat(req: dict):
         raise HTTPException(status_code=503, detail=f"Copilot service unreachable: {e}")
 
 
+@app.get("/api/v1/graph/data")
+async def get_graph_data():
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get("http://localhost:8005/api/v1/graph/data", timeout=5.0)
+            if res.status_code != 200:
+                raise HTTPException(status_code=res.status_code, detail=res.text)
+            return res.json()
+    except httpx.RequestError as e:
+        log.error("dashboard_api.graph_service_proxy_failed", error=str(e))
+        raise HTTPException(status_code=503, detail=f"Graph service unreachable: {e}")
+
+
+@app.post("/api/v1/graph/query")
+async def post_graph_query(req: dict):
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post("http://localhost:8005/api/v1/graph/query", json=req, timeout=5.0)
+            if res.status_code != 200:
+                raise HTTPException(status_code=res.status_code, detail=res.text)
+            return res.json()
+    except httpx.RequestError as e:
+        log.error("dashboard_api.graph_service_proxy_failed", error=str(e))
+        raise HTTPException(status_code=503, detail=f"Graph service unreachable: {e}")
+
+
 @app.websocket("/ws/live")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)

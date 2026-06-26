@@ -8,6 +8,8 @@ import PoliciesPage from './pages/PoliciesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import CopilotPage from './pages/CopilotPage';
+import GraphExplorerPage from './pages/GraphExplorerPage';
+import TwinExplorerPage from './pages/TwinExplorerPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +31,8 @@ export default function App() {
             <Route path="agents" element={<AgentsPage />} />
             <Route path="policies" element={<PoliciesPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="graph" element={<GraphExplorerPage />} />
+            <Route path="twin" element={<TwinExplorerPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="copilot" element={<CopilotPage />} />
           </Route>

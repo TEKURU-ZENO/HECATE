@@ -210,6 +210,30 @@ def get_db_connection():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS twin_memory (
+            id TEXT PRIMARY KEY,
+            incident_id TEXT,
+            service_name TEXT,
+            playbook_sequence TEXT,
+            predicted_mttr REAL,
+            actual_mttr REAL,
+            predicted_cost REAL,
+            actual_cost REAL,
+            predicted_blast_radius REAL,
+            actual_blast_radius REAL,
+            prediction_error REAL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS playbook_q_values (
+            state_key TEXT,
+            action_name TEXT,
+            q_value REAL DEFAULT 0.0,
+            PRIMARY KEY (state_key, action_name)
+        )
+    """)
 
     # Check if seed policies exist
     cursor.execute("SELECT COUNT(*) FROM policies")

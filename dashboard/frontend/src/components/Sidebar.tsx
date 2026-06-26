@@ -10,6 +10,8 @@ import {
   Zap,
   ChevronRight,
   MessageSquare,
+  Share2,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +21,8 @@ const navItems = [
   { to: '/agents',    label: 'Agents',     Icon: Bot                         },
   { to: '/policies',  label: 'Policies',   Icon: Shield                      },
   { to: '/analytics', label: 'Analytics',  Icon: BarChart2                   },
+  { to: '/graph',     label: 'Graph Explorer', Icon: Share2                  },
+  { to: '/twin',      label: 'Twin Explorer', Icon: Activity                 },
   { to: '/settings',  label: 'Settings',   Icon: Settings                    },
   { to: '/copilot',   label: 'HECATE Copilot', Icon: MessageSquare               },
 ];
@@ -88,7 +92,7 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-white/80">System Operational</div>
-            <div className="text-[10px] text-white/30 font-mono">8/8 agents running</div>
+            <div className="text-[10px] text-white/30 font-mono">9/9 agents running</div>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-white/20" />
         </div>

@@ -55,6 +55,8 @@ def main():
         {"name": "policy-service", "path": "services/policy-service", "port": 8002},
         {"name": "forecasting-service", "path": "services/forecasting-service", "port": 8003},
         {"name": "copilot-service", "path": "services/copilot-service", "port": 8004},
+        {"name": "graph-service", "path": "services/graph-service", "port": 8005},
+        {"name": "digital-twin-service", "path": "services/digital-twin-service", "port": 8006},
     ]
 
     for svc in services:
@@ -75,6 +77,7 @@ def main():
         {"name": "detection-agent", "path": "agents/detection-agent"},
         {"name": "rca-agent", "path": "agents/rca-agent"},
         {"name": "recommendation-agent", "path": "agents/recommendation-agent"},
+        {"name": "simulation-agent", "path": "agents/simulation-agent"},
         {"name": "decision-agent", "path": "agents/decision-agent"},
         {"name": "remediation-agent", "path": "agents/remediation-agent"},
         {"name": "learning-agent", "path": "agents/learning-agent"},

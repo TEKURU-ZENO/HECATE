@@ -1,10 +1,22 @@
+import os
+import yaml
 import structlog
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from ..hecate_db import get_db_connection
 
 router = APIRouter()
 log = structlog.get_logger()
+
+
+class EvaluatePayload(BaseModel):
+    action: str
+    service_name: str
+    service_type: str = "service"
+    cluster: str = "cluster-aws-primary"
+    traffic: str = "normal"
+    replicas: int = 1
 
 
 @router.get("/policies")
@@ -47,3 +59,75 @@ async def match_policy(incident_title: str):
             break
 
     return {"action": matched_action, "policy_id": matched_policy_id}
+
+
+@router.post("/policies/evaluate")
+async def evaluate_policy(payload: EvaluatePayload):
+    # Find policies/policy-rules.yaml relative to HECATE repository root
+    ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+    rules_path = os.path.join(ROOT_DIR, "policies", "policy-rules.yaml")
+    
+    if os.path.exists(rules_path):
+        try:
+            with open(rules_path, "r") as f:
+                data = yaml.safe_load(f)
+            policies = data.get("policies", [])
+        except Exception as e:
+            log.error("policy.yaml_load_failed", error=str(e))
+            policies = []
+    else:
+        policies = []
+
+    for pol in policies:
+        # Match criteria check
+        match_criteria = pol.get("match", {})
+        matches_all = True
+        for k, v in match_criteria.items():
+            payload_val = getattr(payload, k, None)
+            if payload_val is None or str(payload_val).lower() != str(v).lower():
+                matches_all = False
+                break
+        
+        if not matches_all:
+            continue
+
+        # Condition criteria check
+        cond_criteria = pol.get("condition", {})
+        condition_satisfied = True
+        for k, v in cond_criteria.items():
+            payload_val = getattr(payload, k, None)
+            if payload_val is None:
+                condition_satisfied = False
+                break
+            
+            # Numeric evaluation like '>5'
+            if str(v).startswith(">"):
+                try:
+                    limit = int(str(v)[1:])
+                    if not (int(payload_val) > limit):
+                        condition_satisfied = False
+                        break
+                except Exception:
+                    condition_satisfied = False
+                    break
+            elif str(v).startswith("<"):
+                try:
+                    limit = int(str(v)[1:])
+                    if not (int(payload_val) < limit):
+                        condition_satisfied = False
+                        break
+                except Exception:
+                    condition_satisfied = False
+                    break
+            else:
+                # String matching (substring or exact)
+                if str(v).lower() not in str(payload_val).lower():
+                    condition_satisfied = False
+                    break
+                    
+        if condition_satisfied:
+            effect = pol.get("effect", "approve")
+            log.info("policy.evaluated", policy_id=pol.get("id"), effect=effect, service=payload.service_name)
+            return {"status": "evaluated", "effect": effect, "policy_id": pol.get("id")}
+
+    return {"status": "evaluated", "effect": "approve", "policy_id": "none"}

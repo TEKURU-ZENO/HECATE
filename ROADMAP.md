@@ -26,3 +26,10 @@
 * Learning agent for reinforcement learning optimization
 * Model drift detection and automated retraining
 * Chaos testing validation at scale
+
+## Phase 10: HECATE v2.0 — Autonomous Infrastructure Simulation & Planning (Session 10)
+* Standalone `digital-twin-service` (port 8006) for sequence simulation & self-calibration
+* OPA-like Declarative Policy Service and post-simulation Decision risk engine
+* Execution Validator (topology freshness & liveness protection gate)
+* Recommendation Agent Q-value optimization via Temporal Difference (TD) learning
+* React Twin Explorer Dashboard with Reality vs Prediction error metrics
