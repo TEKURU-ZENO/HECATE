@@ -1,0 +1,7 @@
+plugin:
+  id: custom-anomaly-detector
+  version: 1.2.0
+  type: detector
+  api_version: 1
+  author: Dev
+  description: "An Isolation Forest custom anomaly detector extension plugin for high-frequency infrastructure metrics."

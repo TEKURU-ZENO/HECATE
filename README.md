@@ -252,6 +252,22 @@ make dev       # Start all HECATE agents (development mode)
 make test
 make test-coverage
 ```
+
+### 7. Run the Controlled Research-Grade Evaluation Harness
+HECATE includes a modular evaluation harness under the `evaluation/` package to benchmark anomaly detection, twin simulations, learning convergence, and SRE operational metrics under reproducible seed controls:
+
+```bash
+# Run the fast synthetic validation profile
+python scripts/evaluate.py --profile quick --seed 42
+
+# Compare two evaluation JSON runs to print a git-style delta percentage change table
+python scripts/evaluate.py --compare docs/validation/evaluation.json docs/validation/evaluation_standard.json
+```
+The evaluation outputs include:
+- An interactive, styled executive dashboard (**`docs/validation/evaluation.html`**).
+- Scientific vector SVG plots (PDF CDF curves, Q-value learning progress) and LaTeX-ready CSV tables in **`docs/paper/`**.
+- Immutable raw telemetry, predictions, and ground-truth runs persisted in **`evaluation/datasets/v2.0/`**.
+
 ---
 ## Components
 | Component | Layer | Description | Docs |

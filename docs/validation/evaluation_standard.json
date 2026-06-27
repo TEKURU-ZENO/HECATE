@@ -1,0 +1,203 @@
+{
+  "precision": {
+    "value": 100.0,
+    "ci": [
+      100.0,
+      100.0
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "recall": {
+    "value": 95.0,
+    "ci": [
+      91.9794371385452,
+      98.02056286145479
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "f1_score": {
+    "value": 97.43589743589743,
+    "ci": [
+      95.24527130016929,
+      99.62652357162557
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "prediction_accuracy": {
+    "value": 90.0,
+    "ci": [
+      85.84221212662311,
+      94.15778787337689
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "lead_time": {
+    "value": 33.73594081070826,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "rca_accuracy": {
+    "value": 97.89473684210527,
+    "ci": [
+      95.85341192051973,
+      99.93606176369082
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "recommendation_accuracy": {
+    "value": 96.3157894736842,
+    "ci": [
+      93.63723653100334,
+      98.99434241636509
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "graph_traversal_latency": {
+    "value": 5.0295408223863145,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "graph_lookup_accuracy": {
+    "value": 93.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "copilot_retrieval_recall": {
+    "value": 93.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "copilot_groundedness": {
+    "value": 91.5,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "approvals_generated": {
+    "value": 190.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "approvals_accepted_rate": {
+    "value": 90.29605263157893,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "policy_compliance": {
+    "value": 100.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "approval_latency": {
+    "value": 0.5102069746470217,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "learning_reward_delta": {
+    "value": 0.8549245494730426,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "twin_simulation_mae": {
+    "value": 1.88758304226261,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "twin_simulation_rmse": {
+    "value": 2.448063591617887,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "twin_calibration_error": {
+    "value": 6.336715801962933,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "latency_p50": {
+    "value": 41.210750444211214,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "latency_p95": {
+    "value": 49.71708949346608,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "throughput_events": {
+    "value": 450.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "throughput_simulations": {
+    "value": 12.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "cpu_utilization": {
+    "value": 10.286870693527606,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "ram_utilization_mb": {
+    "value": 59.92716249519154,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "recovery_success_rate": {
+    "value": 91.5,
+    "ci": [
+      87.63489689658867,
+      95.36510310341134
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "mttr": {
+    "value": 31.17052545650666,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "mtbf": {
+    "value": 282.25973519348787,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "availability": {
+    "value": 99.96698954769363,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "cost_efficiency": {
+    "value": 85.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  }
+}

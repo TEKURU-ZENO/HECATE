@@ -1403,8 +1403,121 @@ def main():
         assert len(twin_records) > 0, "Scenario 25: No simulation predictions logged in twin_memory!"
         print("[Scenario 25] Plan comparison & scoring selection verified successfully.")
 
+        # ==========================================
+        # Scenario 26: Health Probe Validation
+        # ==========================================
+        print("\n--- Running Scenario 26: Health Probe Validation ---")
+        health_services = [
+            ("dashboard-api", 8000),
+            ("anomaly-service", 8001),
+            ("policy-service", 8002),
+            ("forecasting-service", 8003),
+            ("copilot-service", 8004),
+            ("graph-service", 8005),
+            ("digital-twin-service", 8006)
+        ]
+        for name, port in health_services:
+            res_h = httpx.get(f"http://localhost:{port}/health")
+            assert res_h.status_code == 200, f"Scenario 26: {name} /health failed"
+            res_r = httpx.get(f"http://localhost:{port}/ready")
+            assert res_r.status_code == 200, f"Scenario 26: {name} /ready failed"
+            res_l = httpx.get(f"http://localhost:{port}/live")
+            assert res_l.status_code == 200, f"Scenario 26: {name} /live failed"
+            res_m = httpx.get(f"http://localhost:{port}/metrics")
+            assert res_m.status_code == 200, f"Scenario 26: {name} /metrics failed"
+        print("[Scenario 26] Standardized Health Probes verified successfully.")
+
+        # ==========================================
+        # Scenario 27: Multi-Tenancy Context Isolation
+        # ==========================================
+        print("\n--- Running Scenario 27: Multi-Tenancy Context Isolation ---")
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO incidents (id, incident_code, title, severity, status, service_name, tenant_id)
+            VALUES 
+            ('INC-TENANT-A-27', 'CODE-TENANT-A-27', 'CPU Spiking A', 'critical', 'open', 'payment-service', 'tenant-a'),
+            ('INC-TENANT-B-27', 'CODE-TENANT-B-27', 'CPU Spiking B', 'critical', 'open', 'payment-service', 'tenant-b')
+        """)
+        conn.commit()
+        conn.close()
+
+        res_t_a = httpx.get("http://localhost:8000/api/v1/incidents", headers={"X-Tenant-ID": "tenant-a"})
+        assert res_t_a.status_code == 200, "Scenario 27: failed to query tenant-a incidents"
+        incidents_a = res_t_a.json()
+        print(f"[Scenario 27] tenant-a incidents: {[i['id'] for i in incidents_a]}")
+        assert any(i["id"] == "INC-TENANT-A-27" for i in incidents_a), "Scenario 27: INC-TENANT-A-27 not found in tenant-a data"
+        assert not any(i["id"] == "INC-TENANT-B-27" for i in incidents_a), "Scenario 27: tenant-a query leaked tenant-b data"
+
+        res_t_b = httpx.get("http://localhost:8000/api/v1/incidents", headers={"X-Tenant-ID": "tenant-b"})
+        assert res_t_b.status_code == 200, "Scenario 27: failed to query tenant-b incidents"
+        incidents_b = res_t_b.json()
+        print(f"[Scenario 27] tenant-b incidents: {[i['id'] for i in incidents_b]}")
+        assert any(i["id"] == "INC-TENANT-B-27" for i in incidents_b), "Scenario 27: INC-TENANT-B-27 not found in tenant-b data"
+        assert not any(i["id"] == "INC-TENANT-A-27" for i in incidents_b), "Scenario 27: tenant-b query leaked tenant-a data"
+        print("[Scenario 27] Multi-tenancy context isolation verified successfully.")
+
+        # ==========================================
+        # Scenario 28: CLI Command Execution
+        # ==========================================
+        print("\n--- Running Scenario 28: CLI Command Execution ---")
+        out_status = subprocess.check_output([sys.executable, os.path.join(ROOT_DIR, "scripts", "hecate_cli.py"), "status"]).decode()
+        print(f"[Scenario 28] hecate status output:\n{out_status}")
+        assert "dashboard-api" in out_status, "Scenario 28: status output did not mention dashboard-api"
+        
+        out_doc = subprocess.check_output([sys.executable, os.path.join(ROOT_DIR, "scripts", "hecate_cli.py"), "doctor"]).decode()
+        print(f"[Scenario 28] hecate doctor output:\n{out_doc}")
+        assert "Doctor report completed" in out_doc, "Scenario 28: doctor check failed"
+        print("[Scenario 28] CLI command execution verified successfully.")
+
+        # ==========================================
+        # Scenario 29: Weekly Report Generation
+        # ==========================================
+        print("\n--- Running Scenario 29: Weekly Report Generation ---")
+        res_rep = httpx.get("http://localhost:8000/api/v1/reports/weekly")
+        assert res_rep.status_code == 200, "Scenario 29: Weekly report endpoint failed"
+        rep_data = res_rep.json()
+        assert "json" in rep_data and "markdown" in rep_data, "Scenario 29: Response missing json or markdown structures"
+        assert "availability_pct" in rep_data["json"]["sre_kpis"], "Scenario 29: Report missing availability KPI"
+        print("[Scenario 29] SRE Weekly report generation verified successfully.")
+
+        # ==========================================
+        # Scenario 30: Cryptographic Signed Decisions
+        # ==========================================
+        print("\n--- Running Scenario 30: Cryptographic Signed Decisions ---")
+        from hecate_events import HecateEventBus
+        eb = HecateEventBus(kafka_servers="localhost:9094")
+        unsigned_decision = {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "decision.remediate",
+            "schema_version": "1.0.0",
+            "incident_id": "INC-UNSIGNED-30",
+            "action": "restart_pod",
+            "target": "payment-service",
+            "namespace": "hecate-system",
+            "timestamp": time.time()
+        }
+        # Publish with an invalid key to fail signature verification
+        os.environ["DECISION_SIGNING_KEY"] = "INVALID_KEY_FOR_TESTING"
+        eb.publish("decision-topic", unsigned_decision)
+        if "DECISION_SIGNING_KEY" in os.environ:
+            del os.environ["DECISION_SIGNING_KEY"]
+            
+        time.sleep(2.0)
+        
+        conn, _ = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT status, error_message FROM remediations WHERE incident_id = 'INC-UNSIGNED-30'")
+        row_rem = cursor.fetchone()
+        conn.close()
+        
+        print(f"[Scenario 30] DB log for INC-UNSIGNED-30: {dict(row_rem) if row_rem else None}")
+        assert row_rem is not None, "Scenario 30: Remediation record not found in DB!"
+        assert "Rejected" in row_rem["status"] or "Rejected" in row_rem["error_message"], f"Expected signature rejection, got status={row_rem['status']}, err={row_rem['error_message']}"
+        print("[Scenario 30] Cryptographic signed decision verification verified successfully.")
+
         print(
-            "[E2E Test] SUCCESS: All 25 Scenarios (1: Anomaly, 2: RCA, 3: Learning Memory, 4: Double Trigger, 5: Similarity, 6: Cold-Start, 7: HITL Approval, 8: HITL Rejection, 9: Concurrency Resolution, 10: Proactive Mitigation, 11: False Positive Protection, 12: Copilot MTTR/Prevented QA, 13: Similar Incident Search, 14: Gemini Fallback, 15: Graph RCA, 16: Mock Fallback, 17: Copilot Graph QA, 18: Neighbor Recs, 19: Twin Simulation, 20: Policy-as-Code, 21: TD Learning, 22: Planning Agent, 23: Accuracy Calc, 24: Calibration Feedback, 25: Plan Comparison) verified successfully!"
+            "[E2E Test] SUCCESS: All 30 Scenarios verified successfully!"
         )
         sys.exit(0)
 

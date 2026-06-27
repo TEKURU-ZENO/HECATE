@@ -38,6 +38,32 @@ class RemediationAgent:
             "remediation_agent.received_decision", action=action, target=target, namespace=namespace
         )
 
+        # Cryptographic signature verification (Phase P5 Security)
+        import hmac
+        import hashlib
+        import json
+        import os
+        
+        signature = decision.get("signature")
+        if not signature:
+            log.error("remediation_agent.security.unsigned_payload_rejected", incident_id=incident_id)
+            self.record_remediation_outcome(
+                incident_id, action, False, "Rejected: Unsigned decision payload"
+            )
+            return
+            
+        secret_key = os.environ.get("DECISION_SIGNING_KEY", "HECATE_SECRET_SIGNING_KEY_2026").encode()
+        payload_to_verify = {k: v for k, v in decision.items() if k not in ["signature", "trace_context"]}
+        serialized_payload = json.dumps(payload_to_verify, sort_keys=True).encode()
+        expected_sig = hmac.new(secret_key, serialized_payload, hashlib.sha256).hexdigest()
+        
+        if not hmac.compare_digest(signature, expected_sig):
+            log.error("remediation_agent.security.signature_mismatch_rejected", incident_id=incident_id)
+            self.record_remediation_outcome(
+                incident_id, action, False, "Rejected: Cryptographic signature mismatch"
+            )
+            return
+
         # 1. Action Validator (Governance Gate)
         is_valid = self.validate_action(action, target, namespace)
         if not is_valid:

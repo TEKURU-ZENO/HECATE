@@ -1,0 +1,122 @@
+[
+  {
+    "metric": "precision",
+    "value": 100.0
+  },
+  {
+    "metric": "recall",
+    "value": 94.0
+  },
+  {
+    "metric": "f1_score",
+    "value": 96.90721649484536
+  },
+  {
+    "metric": "prediction_accuracy",
+    "value": 92.0
+  },
+  {
+    "metric": "lead_time",
+    "value": 33.681069891607095
+  },
+  {
+    "metric": "rca_accuracy",
+    "value": 100.0
+  },
+  {
+    "metric": "recommendation_accuracy",
+    "value": 93.61702127659575
+  },
+  {
+    "metric": "graph_traversal_latency",
+    "value": 4.962248618723041
+  },
+  {
+    "metric": "graph_lookup_accuracy",
+    "value": 94.0
+  },
+  {
+    "metric": "copilot_retrieval_recall",
+    "value": 94.0
+  },
+  {
+    "metric": "copilot_groundedness",
+    "value": 88.0
+  },
+  {
+    "metric": "approvals_generated",
+    "value": 47.0
+  },
+  {
+    "metric": "approvals_accepted_rate",
+    "value": 87.76595744680851
+  },
+  {
+    "metric": "policy_compliance",
+    "value": 100.0
+  },
+  {
+    "metric": "approval_latency",
+    "value": 0.46749751031329445
+  },
+  {
+    "metric": "learning_reward_delta",
+    "value": 0.7607934407490701
+  },
+  {
+    "metric": "twin_simulation_mae",
+    "value": 1.7050266027960421
+  },
+  {
+    "metric": "twin_simulation_rmse",
+    "value": 2.153583437286672
+  },
+  {
+    "metric": "twin_calibration_error",
+    "value": 3.9876448040091494
+  },
+  {
+    "metric": "latency_p50",
+    "value": 42.867055144033216
+  },
+  {
+    "metric": "latency_p95",
+    "value": 49.31034940211834
+  },
+  {
+    "metric": "throughput_events",
+    "value": 450.0
+  },
+  {
+    "metric": "throughput_simulations",
+    "value": 12.0
+  },
+  {
+    "metric": "cpu_utilization",
+    "value": 9.534113884292275
+  },
+  {
+    "metric": "ram_utilization_mb",
+    "value": 59.46110551343772
+  },
+  {
+    "metric": "recovery_success_rate",
+    "value": 88.0
+  },
+  {
+    "metric": "mttr",
+    "value": 31.312140700777853
+  },
+  {
+    "metric": "mtbf",
+    "value": 199.93621600968356
+  },
+  {
+    "metric": "availability",
+    "value": 99.96810800484178
+  },
+  {
+    "metric": "cost_efficiency",
+    "value": 85.0
+  }
+]

@@ -27,3 +27,23 @@ async def health():
 async def startup():
     run_anomaly_listener()
     log.info("anomaly_service.started")
+
+
+# HECATE Production Edition Standardized Health & Readiness Probes
+@app.get("/ready")
+async def ready_check_probe():
+    # Standard readiness probe
+    return {"status": "ready", "service": "anomaly-service"}
+
+@app.get("/live")
+async def live_check_probe():
+    # Standard liveness probe
+    return {"status": "live", "service": "anomaly-service"}
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app)
+except Exception:
+    @app.get("/metrics")
+    async def metrics_endpoint_probe():
+        return 'hecate_service_up{service="anomaly-service"} 1.0\n'

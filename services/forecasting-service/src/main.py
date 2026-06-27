@@ -31,3 +31,23 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     log.info("forecasting_service.started")
+
+
+# HECATE Production Edition Standardized Health & Readiness Probes
+@app.get("/ready")
+async def ready_check_probe():
+    # Standard readiness probe
+    return {"status": "ready", "service": "forecasting-service"}
+
+@app.get("/live")
+async def live_check_probe():
+    # Standard liveness probe
+    return {"status": "live", "service": "forecasting-service"}
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app)
+except Exception:
+    @app.get("/metrics")
+    async def metrics_endpoint_probe():
+        return 'hecate_service_up{service="forecasting-service"} 1.0\n'

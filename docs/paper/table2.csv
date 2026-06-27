@@ -1,0 +1,8 @@
+AblationGroup,MTTR_sec,DiagnosisPrecision_pct,Availability_pct
+Full HECATE Pipeline,11.65,95.28,99.6375
+Without Prediction,15.47,91.02,99.3349
+Without Twin,18.56,95.64,99.1992
+Without Learning,13.07,96.24,99.5389
+Without Graph,16.03,83.06,99.3234
+Without Copilot,11.57,95.98,99.5521
+Without HITL Governance,11.44,95.78,99.0908

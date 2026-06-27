@@ -1,0 +1,12 @@
+{
+  "expected_anomaly": true,
+  "expected_rca": "order-service",
+  "expected_playbook": "rollback_release",
+  "expected_policy_effect": "approve",
+  "expected_twin": {
+    "mttr": 30.0,
+    "downtime": 20.0,
+    "cost": 0.0,
+    "blast_radius": 0.2
+  }
+}

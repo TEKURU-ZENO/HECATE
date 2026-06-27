@@ -1,0 +1,8 @@
+BaselineGroup,MTTR_sec,SuccessRate_pct,Availability_pct
+Baseline 0 (No Remediation),300.30,0.00,90.0375
+Baseline 1 (Threshold Rules),45.94,69.02,98.1349
+Baseline 2 (Random Playbook),55.13,24.84,96.4992
+Baseline 3 (Historical Recs),21.15,84.44,99.1389
+Baseline 4 (Prediction Only),19.57,87.06,99.2234
+Baseline 5 (Pred + Rec),14.34,91.18,99.3521
+Baseline 6 (Full HECATE),12.38,96.48,99.5908

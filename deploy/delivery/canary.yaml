@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-service-stable
+  namespace: hecate-system
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: anomaly-service
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: anomaly-service
+        track: stable
+    spec:
+      containers:
+        - name: anomaly-service
+          image: hecate/anomaly-service:v1.0.0
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-service-canary
+  namespace: hecate-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anomaly-service
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: anomaly-service
+        track: canary
+    spec:
+      containers:
+        - name: anomaly-service
+          image: hecate/anomaly-service:v2.0.0-rc1
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomaly-service-canary-split
+  namespace: hecate-system
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: anomaly-service
+    # Routes to both stable and canary pods. Because stable has 9 replicas and canary has 1 replica,
+    # the traffic is divided as a 90% stable and 10% canary split.

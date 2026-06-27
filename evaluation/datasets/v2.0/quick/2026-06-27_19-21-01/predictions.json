@@ -1,0 +1,1869 @@
+[
+  {
+    "iteration": 0,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 14.237980654944229,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.19176060475093,
+      "downtime": 19.68375740765642,
+      "cost": -0.008400578752144398,
+      "blast_radius": 0.2,
+      "confidence": 0.8950385937895566
+    },
+    "actual_twin": {
+      "mttr": 31.758795949725656,
+      "downtime": 21.166687903143423,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.5670353449747267,
+    "policy_action": "approve",
+    "q_value": 0.045000000000000005,
+    "latencies_ms": {
+      "detection": 5.8631907204839875,
+      "rca": 6.93656967962498,
+      "prediction": 4.660485192963987,
+      "recommendation": 3.3634323307086613,
+      "twin": 11.882093509110843,
+      "decision": 2.3829035366250517,
+      "remediation": 6.965787031955492
+    },
+    "cpu_load": 11.316643991220648,
+    "ram_mb": 56.371316101280605,
+    "timestamp": 1782588061.6774986
+  },
+  {
+    "iteration": 1,
+    "detected": false,
+    "rca_correct": false,
+    "predicted_rca": null,
+    "predicted_incident": false,
+    "lead_time": 0.0,
+    "rec_correct": false,
+    "playbook": null,
+    "predicted_twin": null,
+    "actual_twin": null,
+    "prediction_error": 0.0,
+    "policy_action": null,
+    "q_value": 0.045000000000000005,
+    "latencies_ms": {
+      "detection": 7.03527549506618,
+      "rca": 5.522858285528351,
+      "prediction": 3.348231381221747,
+      "recommendation": 6.510753630911693,
+      "twin": 9.845845382348623,
+      "decision": 4.519867458297608,
+      "remediation": 4.706188322006653
+    },
+    "cpu_load": 14.553145792212376,
+    "ram_mb": 58.37852503774564,
+    "timestamp": 1782588121.6775827
+  },
+  {
+    "iteration": 2,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 17.304270615350507,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.431244124418903,
+      "downtime": 18.981126449160136,
+      "cost": 0.18808444809663402,
+      "blast_radius": 0.2,
+      "confidence": 0.9116534171563908
+    },
+    "actual_twin": {
+      "mttr": 31.654469730998148,
+      "downtime": 20.316881672076164,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.223225606579245,
+    "policy_action": "approve",
+    "q_value": 0.08775000000000001,
+    "latencies_ms": {
+      "detection": 7.637850871870366,
+      "rca": 7.560492156521361,
+      "prediction": 6.293430451657193,
+      "recommendation": 2.116772664820065,
+      "twin": 13.581795100388002,
+      "decision": 7.404531130718682,
+      "remediation": 5.143176918677375
+    },
+    "cpu_load": 6.971626889084836,
+    "ram_mb": 47.711898459710646,
+    "timestamp": 1782588181.677638
+  },
+  {
+    "iteration": 3,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 32.96029848403256,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.79750205707601,
+      "downtime": 20.689807299869752,
+      "cost": -0.44594933351553784,
+      "blast_radius": 0.2,
+      "confidence": 0.9171276439804797
+    },
+    "actual_twin": {
+      "mttr": 29.96442474309971,
+      "downtime": 19.09785545256998,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.8330773139763004,
+    "policy_action": "approve",
+    "q_value": 0.12836250000000002,
+    "latencies_ms": {
+      "detection": 6.3449809310766065,
+      "rca": 5.174110448834277,
+      "prediction": 7.7843955311537805,
+      "recommendation": 4.812525242782332,
+      "twin": 13.67774176502401,
+      "decision": 7.191661221582224,
+      "remediation": 5.779057595918602
+    },
+    "cpu_load": 5.469116437818303,
+    "ram_mb": 45.823309754814716,
+    "timestamp": 1782588241.6776917
+  },
+  {
+    "iteration": 4,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 52.03127837302139,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.965090827005902,
+      "downtime": 19.552207466137293,
+      "cost": 0.044037570668147855,
+      "blast_radius": 0.2,
+      "confidence": 0.9248507718662503
+    },
+    "actual_twin": {
+      "mttr": 30.223983888909995,
+      "downtime": 20.787943389509998,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.258893061904093,
+    "policy_action": "approve",
+    "q_value": 0.16694437500000003,
+    "latencies_ms": {
+      "detection": 6.382155092838687,
+      "rca": 6.637416395120287,
+      "prediction": 2.3988196111084745,
+      "recommendation": 2.630354969200379,
+      "twin": 10.730662626849703,
+      "decision": 3.956532140170759,
+      "remediation": 3.5101107655163357
+    },
+    "cpu_load": 13.429273246607936,
+    "ram_mb": 45.1060719297869,
+    "timestamp": 1782588301.6777453
+  },
+  {
+    "iteration": 5,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 53.50833324215802,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 28.898846134505497,
+      "downtime": 19.54317886524777,
+      "cost": -0.09542500934811492,
+      "blast_radius": 0.2,
+      "confidence": 0.8679240054788828
+    },
+    "actual_twin": {
+      "mttr": 30.009157663829402,
+      "downtime": 20.889371427859395,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.110311529323905,
+    "policy_action": "approve",
+    "q_value": 0.20359715625000002,
+    "latencies_ms": {
+      "detection": 5.322973430546352,
+      "rca": 6.930429517050504,
+      "prediction": 5.665213071001686,
+      "recommendation": 4.602137077051888,
+      "twin": 10.172308416343146,
+      "decision": 6.286560610103887,
+      "remediation": 7.413048083222699
+    },
+    "cpu_load": 6.936189729139315,
+    "ram_mb": 54.15295146577341,
+    "timestamp": 1782588361.6777985
+  },
+  {
+    "iteration": 6,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 39.36235373890255,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.29067490522315,
+      "downtime": 19.36061062118535,
+      "cost": 0.20684773837032663,
+      "blast_radius": 0.2,
+      "confidence": 0.8710541461316539
+    },
+    "actual_twin": {
+      "mttr": 31.468158867250835,
+      "downtime": 20.522758398478604,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.17748396202768646,
+    "policy_action": "approve",
+    "q_value": 0.23841729843750004,
+    "latencies_ms": {
+      "detection": 4.851995982281184,
+      "rca": 4.26068794639539,
+      "prediction": 3.0778870013803585,
+      "recommendation": 4.093208563219365,
+      "twin": 12.683501761316682,
+      "decision": 6.259903670749141,
+      "remediation": 6.439852241934007
+    },
+    "cpu_load": 8.049182331220782,
+    "ram_mb": 45.31225077112289,
+    "timestamp": 1782588421.6778748
+  },
+  {
+    "iteration": 7,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 39.51166042256984,
+    "rec_correct": false,
+    "playbook": "migrate_service",
+    "predicted_twin": {
+      "mttr": 29.117992904268274,
+      "downtime": 18.362152184610512,
+      "cost": -0.035110167842794096,
+      "blast_radius": 0.2,
+      "confidence": 0.8611664103381831
+    },
+    "actual_twin": {
+      "mttr": 29.664050049484914,
+      "downtime": 19.975833375791222,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.5460571452166398,
+    "policy_action": "reject",
+    "q_value": 0.23841729843750004,
+    "latencies_ms": {
+      "detection": 4.233494470879909,
+      "rca": 6.311955733357452,
+      "prediction": 7.600965803816072,
+      "recommendation": 5.410115214018455,
+      "twin": 8.131292274175149,
+      "decision": 2.8470133324203477,
+      "remediation": 6.739420264006128
+    },
+    "cpu_load": 5.39707852222458,
+    "ram_mb": 57.77684553014997,
+    "timestamp": 1782588481.6779308
+  },
+  {
+    "iteration": 8,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 20.657510106056193,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.80152329041264,
+      "downtime": 20.776551785670616,
+      "cost": 0.12237518395615411,
+      "blast_radius": 0.2,
+      "confidence": 0.8765965797392269
+    },
+    "actual_twin": {
+      "mttr": 27.316830621182174,
+      "downtime": 19.72702812998711,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 3.4846926692304656,
+    "policy_action": "approve",
+    "q_value": 0.271496433515625,
+    "latencies_ms": {
+      "detection": 3.9707371469355808,
+      "rca": 2.750941942436859,
+      "prediction": 2.668746804352656,
+      "recommendation": 7.907440412274363,
+      "twin": 12.052576737453178,
+      "decision": 7.352555572685864,
+      "remediation": 2.0904810864527756
+    },
+    "cpu_load": 10.996986755141949,
+    "ram_mb": 51.303358900311494,
+    "timestamp": 1782588541.6779833
+  },
+  {
+    "iteration": 9,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 45.3791899308644,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 28.801897340817337,
+      "downtime": 21.777451112111443,
+      "cost": -0.17520493078863375,
+      "blast_radius": 0.2,
+      "confidence": 0.8991833549035704
+    },
+    "actual_twin": {
+      "mttr": 29.395421424205004,
+      "downtime": 20.447409764904254,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.5935240833876669,
+    "policy_action": "approve",
+    "q_value": 0.3029216118398438,
+    "latencies_ms": {
+      "detection": 2.922843726845042,
+      "rca": 6.493950271692152,
+      "prediction": 4.418051736459243,
+      "recommendation": 7.948442964434366,
+      "twin": 9.48125408476208,
+      "decision": 4.462853496914301,
+      "remediation": 7.6597254506332115
+    },
+    "cpu_load": 10.80203244670576,
+    "ram_mb": 56.03626010189312,
+    "timestamp": 1782588601.6780353
+  },
+  {
+    "iteration": 10,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": false,
+    "lead_time": 0.0,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.99893224983986,
+      "downtime": 20.189492034285795,
+      "cost": 0.08918221439965882,
+      "blast_radius": 0.2,
+      "confidence": 0.8743752412794382
+    },
+    "actual_twin": {
+      "mttr": 31.15611428977563,
+      "downtime": 19.51173128514952,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.15718203993576907,
+    "policy_action": "approve",
+    "q_value": 0.3327755312478516,
+    "latencies_ms": {
+      "detection": 4.842721320778502,
+      "rca": 2.702941696492716,
+      "prediction": 2.4728463299358445,
+      "recommendation": 7.896725229524779,
+      "twin": 8.451191629172323,
+      "decision": 4.936899501079225,
+      "remediation": 4.454040410503041
+    },
+    "cpu_load": 12.651031831615324,
+    "ram_mb": 46.08771678878092,
+    "timestamp": 1782588661.6780846
+  },
+  {
+    "iteration": 11,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 14.71711484283972,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.978575931144643,
+      "downtime": 21.275817731971774,
+      "cost": 0.6778000992587014,
+      "blast_radius": 0.2,
+      "confidence": 0.9268791169580373
+    },
+    "actual_twin": {
+      "mttr": 29.30208848766161,
+      "downtime": 20.86690284947261,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.6764874434830332,
+    "policy_action": "approve",
+    "q_value": 0.361136754685459,
+    "latencies_ms": {
+      "detection": 5.599061695625015,
+      "rca": 5.777089094388446,
+      "prediction": 3.0927831261384435,
+      "recommendation": 6.68358939413904,
+      "twin": 14.277660751141891,
+      "decision": 6.227527728055419,
+      "remediation": 2.4808305914148643
+    },
+    "cpu_load": 13.056675785340206,
+    "ram_mb": 50.60828201488934,
+    "timestamp": 1782588721.6781368
+  },
+  {
+    "iteration": 12,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 13.875417468179807,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.149815056516044,
+      "downtime": 20.053901083143224,
+      "cost": 0.5364949091504602,
+      "blast_radius": 0.2,
+      "confidence": 0.9431604174175185
+    },
+    "actual_twin": {
+      "mttr": 34.74513957368758,
+      "downtime": 16.19784547645758,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 5.595324517171537,
+    "policy_action": "approve",
+    "q_value": 0.3880799169511861,
+    "latencies_ms": {
+      "detection": 2.860854206363158,
+      "rca": 3.040416441373691,
+      "prediction": 6.614418237944779,
+      "recommendation": 4.31389395330429,
+      "twin": 13.764555819943508,
+      "decision": 7.665199768629417,
+      "remediation": 3.2604493580545006
+    },
+    "cpu_load": 11.631780928648087,
+    "ram_mb": 55.22669315813528,
+    "timestamp": 1782588781.678188
+  },
+  {
+    "iteration": 13,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 32.17343946604532,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 32.24979243031541,
+      "downtime": 18.831795246069195,
+      "cost": 0.40531081562802806,
+      "blast_radius": 0.2,
+      "confidence": 0.8991095216406985
+    },
+    "actual_twin": {
+      "mttr": 30.893928468497606,
+      "downtime": 22.44372143411713,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.3558639618178034,
+    "policy_action": "approve",
+    "q_value": 0.4136759211036268,
+    "latencies_ms": {
+      "detection": 2.2537141433197743,
+      "rca": 4.039987697849601,
+      "prediction": 2.4901991850122744,
+      "recommendation": 7.827433429878814,
+      "twin": 12.121457505470836,
+      "decision": 5.046062556445937,
+      "remediation": 7.884497185377586
+    },
+    "cpu_load": 8.703312714712336,
+    "ram_mb": 51.474312531865806,
+    "timestamp": 1782588841.6782396
+  },
+  {
+    "iteration": 14,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 34.48954715542226,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.092998294596722,
+      "downtime": 22.081248727724553,
+      "cost": -0.6686340384264495,
+      "blast_radius": 0.2,
+      "confidence": 0.8761025581920644
+    },
+    "actual_twin": {
+      "mttr": 31.088442460896605,
+      "downtime": 18.98925878643786,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.004555833700116807,
+    "policy_action": "approve",
+    "q_value": 0.4379921250484454,
+    "latencies_ms": {
+      "detection": 7.2657337481500335,
+      "rca": 2.3808985094747417,
+      "prediction": 7.101428391928757,
+      "recommendation": 7.899867617896644,
+      "twin": 10.455084500905715,
+      "decision": 3.193366200425917,
+      "remediation": 3.716880911320461
+    },
+    "cpu_load": 12.164136248856785,
+    "ram_mb": 49.92837540085816,
+    "timestamp": 1782588901.678291
+  },
+  {
+    "iteration": 15,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 27.721971379823408,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 28.222066665355882,
+      "downtime": 19.604821628092775,
+      "cost": 0.16002085152803924,
+      "blast_radius": 0.2,
+      "confidence": 0.8837077498232294
+    },
+    "actual_twin": {
+      "mttr": 28.38069110136373,
+      "downtime": 18.75864201044552,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.15862443600784815,
+    "policy_action": "approve",
+    "q_value": 0.46109251879602314,
+    "latencies_ms": {
+      "detection": 7.692357688503494,
+      "rca": 7.767156091404432,
+      "prediction": 5.299699082958119,
+      "recommendation": 5.870234511231837,
+      "twin": 8.497233827876503,
+      "decision": 3.507801269933174,
+      "remediation": 5.322925299317328
+    },
+    "cpu_load": 9.930950888962574,
+    "ram_mb": 50.19734391796428,
+    "timestamp": 1782588961.6783428
+  },
+  {
+    "iteration": 16,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 48.061581993865914,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.10675942785471,
+      "downtime": 20.112470239601826,
+      "cost": -0.21334681501471647,
+      "blast_radius": 0.2,
+      "confidence": 0.9425016941030478
+    },
+    "actual_twin": {
+      "mttr": 29.564649941927865,
+      "downtime": 19.532016453328225,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.5421094859268436,
+    "policy_action": "approve",
+    "q_value": 0.483037892856222,
+    "latencies_ms": {
+      "detection": 7.70327908951332,
+      "rca": 4.531670563034011,
+      "prediction": 3.5652399773202137,
+      "recommendation": 5.359546744243341,
+      "twin": 14.596980092779267,
+      "decision": 7.3077637343989,
+      "remediation": 4.7004214698902205
+    },
+    "cpu_load": 7.065529219182682,
+    "ram_mb": 52.90180933788019,
+    "timestamp": 1782589021.6783943
+  },
+  {
+    "iteration": 17,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 18.381805756448216,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.857879964835274,
+      "downtime": 18.91067904911444,
+      "cost": 1.0826257074723789,
+      "blast_radius": 0.2,
+      "confidence": 0.9434517861304595
+    },
+    "actual_twin": {
+      "mttr": 32.03169442838191,
+      "downtime": 20.825043138222004,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.1738144635466377,
+    "policy_action": "approve",
+    "q_value": 0.503885998213411,
+    "latencies_ms": {
+      "detection": 2.656333957305894,
+      "rca": 5.036666470957754,
+      "prediction": 6.8217163002242165,
+      "recommendation": 2.6189019872380923,
+      "twin": 9.70192486447084,
+      "decision": 2.6588692877511004,
+      "remediation": 4.078632931019994
+    },
+    "cpu_load": 8.507141302076416,
+    "ram_mb": 47.86625469741027,
+    "timestamp": 1782589081.6784465
+  },
+  {
+    "iteration": 18,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 48.84804815579104,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.770248395819202,
+      "downtime": 21.74344521313604,
+      "cost": -0.08843601775957598,
+      "blast_radius": 0.2,
+      "confidence": 0.8819579507809674
+    },
+    "actual_twin": {
+      "mttr": 31.071258198369094,
+      "downtime": 20.356706401926846,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.698990197450108,
+    "policy_action": "approve",
+    "q_value": 0.5236916983027404,
+    "latencies_ms": {
+      "detection": 5.407045052973927,
+      "rca": 6.67706287295059,
+      "prediction": 5.619243105931773,
+      "recommendation": 5.434495349552881,
+      "twin": 11.668089460887707,
+      "decision": 3.2572129467526607,
+      "remediation": 4.587530237135548
+    },
+    "cpu_load": 6.111265441481776,
+    "ram_mb": 49.402912670495,
+    "timestamp": 1782589141.6784983
+  },
+  {
+    "iteration": 19,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 54.914178528545115,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.261876818600633,
+      "downtime": 19.05088980191162,
+      "cost": -0.28266516371638195,
+      "blast_radius": 0.2,
+      "confidence": 0.9104650692217491
+    },
+    "actual_twin": {
+      "mttr": 27.96512329335759,
+      "downtime": 19.24131631493324,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 3.2967535252430444,
+    "policy_action": "approve",
+    "q_value": 0.5425071133876034,
+    "latencies_ms": {
+      "detection": 3.4334232010743624,
+      "rca": 4.79012823624449,
+      "prediction": 2.4668149905829297,
+      "recommendation": 7.034532870744208,
+      "twin": 8.138853330988969,
+      "decision": 2.134423429144459,
+      "remediation": 7.618950007529099
+    },
+    "cpu_load": 14.701714552386317,
+    "ram_mb": 57.8804155249684,
+    "timestamp": 1782589201.6786098
+  },
+  {
+    "iteration": 20,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 41.1956385628509,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.630278480657154,
+      "downtime": 17.9407272284789,
+      "cost": -0.5965133995269484,
+      "blast_radius": 0.2,
+      "confidence": 0.8521159968460003
+    },
+    "actual_twin": {
+      "mttr": 27.89064107722671,
+      "downtime": 19.44176360345494,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.739637403430443,
+    "policy_action": "approve",
+    "q_value": 0.5603817577182232,
+    "latencies_ms": {
+      "detection": 2.7117620210228397,
+      "rca": 4.635283128259731,
+      "prediction": 5.795983784882567,
+      "recommendation": 4.596834760877776,
+      "twin": 13.822571816688601,
+      "decision": 5.8270775544895415,
+      "remediation": 7.104088014666462
+    },
+    "cpu_load": 8.222437523509221,
+    "ram_mb": 54.17771912052377,
+    "timestamp": 1782589261.6786618
+  },
+  {
+    "iteration": 21,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 19.017059886953902,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 32.109864208819594,
+      "downtime": 20.204038002102862,
+      "cost": 0.6059497128394683,
+      "blast_radius": 0.2,
+      "confidence": 0.9489486618005498
+    },
+    "actual_twin": {
+      "mttr": 31.874339192854634,
+      "downtime": 21.998894877982107,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.23552501596496,
+    "policy_action": "approve",
+    "q_value": 0.577362669832312,
+    "latencies_ms": {
+      "detection": 3.0890533229931716,
+      "rca": 4.248701279546242,
+      "prediction": 4.01205109473008,
+      "recommendation": 3.9327224919118775,
+      "twin": 11.54514608773432,
+      "decision": 2.4675733098134005,
+      "remediation": 6.6792648404260415
+    },
+    "cpu_load": 8.825229081177644,
+    "ram_mb": 50.72533245906437,
+    "timestamp": 1782589321.6787133
+  },
+  {
+    "iteration": 22,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 48.62878428050892,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 28.499594250215033,
+      "downtime": 19.995990531232504,
+      "cost": -0.14997149033563628,
+      "blast_radius": 0.2,
+      "confidence": 0.8533812712336409
+    },
+    "actual_twin": {
+      "mttr": 30.516851535474114,
+      "downtime": 18.589599857671452,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.017257285259081,
+    "policy_action": "approve",
+    "q_value": 0.5934945363406964,
+    "latencies_ms": {
+      "detection": 6.1627738636834835,
+      "rca": 2.283449969213473,
+      "prediction": 7.759844520135778,
+      "recommendation": 5.353863849630255,
+      "twin": 11.534669006175921,
+      "decision": 6.705662580666669,
+      "remediation": 6.123612874708977
+    },
+    "cpu_load": 10.653423303002892,
+    "ram_mb": 53.50942213899846,
+    "timestamp": 1782589381.6787648
+  },
+  {
+    "iteration": 23,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 52.37754369631745,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.04413322482941,
+      "downtime": 19.244960219470983,
+      "cost": 0.043660402042018785,
+      "blast_radius": 0.2,
+      "confidence": 0.8510651968785687
+    },
+    "actual_twin": {
+      "mttr": 27.486884768660502,
+      "downtime": 20.401362556334043,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.5572484561689066,
+    "policy_action": "approve",
+    "q_value": 0.6088198095236615,
+    "latencies_ms": {
+      "detection": 7.666221100714601,
+      "rca": 4.977035345390092,
+      "prediction": 4.2488017281974475,
+      "recommendation": 7.139489809563446,
+      "twin": 12.404982298623935,
+      "decision": 4.901635511538941,
+      "remediation": 7.449439294991912
+    },
+    "cpu_load": 8.635707390327585,
+    "ram_mb": 53.317064265582225,
+    "timestamp": 1782589441.678816
+  },
+  {
+    "iteration": 24,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 31.263359359488533,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 27.672368888016422,
+      "downtime": 20.501828046739732,
+      "cost": 0.5598081346390772,
+      "blast_radius": 0.2,
+      "confidence": 0.9408789310021008
+    },
+    "actual_twin": {
+      "mttr": 30.5709700211481,
+      "downtime": 20.439420053329904,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.8986011331316774,
+    "policy_action": "approve",
+    "q_value": 0.6233788190474785,
+    "latencies_ms": {
+      "detection": 2.8282343738502123,
+      "rca": 6.389975850234264,
+      "prediction": 3.377543387787521,
+      "recommendation": 4.003382811158124,
+      "twin": 9.000192566399166,
+      "decision": 3.5222543957493584,
+      "remediation": 4.815523444444046
+    },
+    "cpu_load": 7.631370626470035,
+    "ram_mb": 48.692749035966905,
+    "timestamp": 1782589501.6788678
+  },
+  {
+    "iteration": 25,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 36.9116628409381,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.77196186295151,
+      "downtime": 20.6500461812256,
+      "cost": -0.553248079632124,
+      "blast_radius": 0.2,
+      "confidence": 0.9412227516101165
+    },
+    "actual_twin": {
+      "mttr": 28.734201520802984,
+      "downtime": 19.687640423359667,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.037760342148527,
+    "policy_action": "approve",
+    "q_value": 0.6372098780951045,
+    "latencies_ms": {
+      "detection": 6.903499840881052,
+      "rca": 7.120491969530449,
+      "prediction": 7.810653659060167,
+      "recommendation": 6.3123797580189,
+      "twin": 10.368989106537168,
+      "decision": 4.26347180524817,
+      "remediation": 3.367128064573021
+    },
+    "cpu_load": 8.361256924503325,
+    "ram_mb": 55.63093038545816,
+    "timestamp": 1782589561.6789193
+  },
+  {
+    "iteration": 26,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 53.91179145543341,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.060464018959994,
+      "downtime": 20.322756460302234,
+      "cost": -0.7415236494583733,
+      "blast_radius": 0.2,
+      "confidence": 0.8677723242727068
+    },
+    "actual_twin": {
+      "mttr": 31.071751848791187,
+      "downtime": 16.927555107486402,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.0112878298311934,
+    "policy_action": "approve",
+    "q_value": 0.6503493841903493,
+    "latencies_ms": {
+      "detection": 7.676491227029821,
+      "rca": 5.265092076405651,
+      "prediction": 3.86508185868519,
+      "recommendation": 2.016012309680116,
+      "twin": 10.949675683898397,
+      "decision": 5.431175911114145,
+      "remediation": 5.87076130378397
+    },
+    "cpu_load": 14.197386530688629,
+    "ram_mb": 48.83750600288951,
+    "timestamp": 1782589621.6789713
+  },
+  {
+    "iteration": 27,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 31.446317803322028,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.463673590342733,
+      "downtime": 19.452685333754463,
+      "cost": -0.040706159249144086,
+      "blast_radius": 0.2,
+      "confidence": 0.9178473706969715
+    },
+    "actual_twin": {
+      "mttr": 31.086544793797312,
+      "downtime": 19.35825359699216,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.37712879654542064,
+    "policy_action": "approve",
+    "q_value": 0.6628319149808318,
+    "latencies_ms": {
+      "detection": 7.772655971086418,
+      "rca": 6.330096893007754,
+      "prediction": 2.0685907448363308,
+      "recommendation": 7.565021665093013,
+      "twin": 13.757704092235088,
+      "decision": 6.090288462314861,
+      "remediation": 6.40296206751247
+    },
+    "cpu_load": 5.681978274570944,
+    "ram_mb": 45.273206432333,
+    "timestamp": 1782589681.6790235
+  },
+  {
+    "iteration": 28,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 43.31559852066914,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.69409469125042,
+      "downtime": 19.98076177392009,
+      "cost": 0.36089333585839245,
+      "blast_radius": 0.2,
+      "confidence": 0.873316829308802
+    },
+    "actual_twin": {
+      "mttr": 30.54431236008951,
+      "downtime": 22.27570165023681,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.14978233116091033,
+    "policy_action": "approve",
+    "q_value": 0.6746903192317902,
+    "latencies_ms": {
+      "detection": 3.021640344463747,
+      "rca": 2.29428659378693,
+      "prediction": 3.410157435946816,
+      "recommendation": 3.875353968474686,
+      "twin": 13.020167032520416,
+      "decision": 3.0093322674569145,
+      "remediation": 2.1229421683009937
+    },
+    "cpu_load": 5.839953062662362,
+    "ram_mb": 47.14228641210857,
+    "timestamp": 1782589741.6790748
+  },
+  {
+    "iteration": 29,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 19.187759340062943,
+    "rec_correct": false,
+    "playbook": "migrate_service",
+    "predicted_twin": {
+      "mttr": 30.517613509815707,
+      "downtime": 18.57916276892076,
+      "cost": -0.2848863482018302,
+      "blast_radius": 0.2,
+      "confidence": 0.8538827048216818
+    },
+    "actual_twin": {
+      "mttr": 31.47910794950841,
+      "downtime": 20.068182835395053,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.9614944396927037,
+    "policy_action": "reject",
+    "q_value": 0.6746903192317902,
+    "latencies_ms": {
+      "detection": 3.8828171433993237,
+      "rca": 5.972431146320073,
+      "prediction": 7.463023626364673,
+      "recommendation": 3.2571372620777472,
+      "twin": 11.81411335563111,
+      "decision": 7.5446325144095185,
+      "remediation": 3.6788320145705042
+    },
+    "cpu_load": 6.596071738646415,
+    "ram_mb": 50.139255275730704,
+    "timestamp": 1782589801.6791265
+  },
+  {
+    "iteration": 30,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 42.201248598432535,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.504179761342424,
+      "downtime": 21.1127533069484,
+      "cost": 0.16038357239977027,
+      "blast_radius": 0.2,
+      "confidence": 0.9453590497436182
+    },
+    "actual_twin": {
+      "mttr": 28.78869800286722,
+      "downtime": 18.237344993955944,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.715481758475203,
+    "policy_action": "approve",
+    "q_value": 0.6859558032702007,
+    "latencies_ms": {
+      "detection": 6.100738367626389,
+      "rca": 4.716571058714089,
+      "prediction": 5.051734190991753,
+      "recommendation": 5.379363554734018,
+      "twin": 13.405753436517834,
+      "decision": 5.112110252725159,
+      "remediation": 6.722892074046937
+    },
+    "cpu_load": 6.692918940966765,
+    "ram_mb": 59.46110551343772,
+    "timestamp": 1782589861.679178
+  },
+  {
+    "iteration": 31,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 19.89510618998387,
+    "rec_correct": false,
+    "playbook": "migrate_service",
+    "predicted_twin": {
+      "mttr": 27.079820020248054,
+      "downtime": 20.501375584947677,
+      "cost": -0.4830920924185307,
+      "blast_radius": 0.2,
+      "confidence": 0.9223238331777281
+    },
+    "actual_twin": {
+      "mttr": 32.23225836985805,
+      "downtime": 17.580762666093218,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 5.152438349609998,
+    "policy_action": "reject",
+    "q_value": 0.6859558032702007,
+    "latencies_ms": {
+      "detection": 4.717451543773576,
+      "rca": 6.45755616361669,
+      "prediction": 2.69602097883324,
+      "recommendation": 3.07160543056244,
+      "twin": 13.405690357585414,
+      "decision": 3.947603840736374,
+      "remediation": 6.836187284886489
+    },
+    "cpu_load": 6.148618160375545,
+    "ram_mb": 59.132905933752184,
+    "timestamp": 1782589921.6792295
+  },
+  {
+    "iteration": 32,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 35.41771403943882,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.063278125476273,
+      "downtime": 20.17568829894197,
+      "cost": -0.09789098986099784,
+      "blast_radius": 0.2,
+      "confidence": 0.9462018710493203
+    },
+    "actual_twin": {
+      "mttr": 33.08554383609622,
+      "downtime": 21.49860448143458,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 3.0222657106199478,
+    "policy_action": "approve",
+    "q_value": 0.6966580131066906,
+    "latencies_ms": {
+      "detection": 6.7343141590211175,
+      "rca": 2.1192761834876794,
+      "prediction": 2.915202340844113,
+      "recommendation": 7.408535324320676,
+      "twin": 8.707107415470805,
+      "decision": 3.2165878336504043,
+      "remediation": 3.543621854073531
+    },
+    "cpu_load": 8.557501916024403,
+    "ram_mb": 50.86789171942108,
+    "timestamp": 1782589981.6792817
+  },
+  {
+    "iteration": 33,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 51.99239810418416,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.66812469125705,
+      "downtime": 21.062942828795606,
+      "cost": 0.9249558531952141,
+      "blast_radius": 0.2,
+      "confidence": 0.8512601983734471
+    },
+    "actual_twin": {
+      "mttr": 28.371340499930703,
+      "downtime": 17.886637343789157,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.2967841913263456,
+    "policy_action": "approve",
+    "q_value": 0.706825112451356,
+    "latencies_ms": {
+      "detection": 2.1359958642211376,
+      "rca": 2.8340883457951698,
+      "prediction": 7.916503330266639,
+      "recommendation": 7.9624866549451845,
+      "twin": 13.749964785884197,
+      "decision": 7.0596932261353444,
+      "remediation": 4.407906448112691
+    },
+    "cpu_load": 11.671306623451159,
+    "ram_mb": 57.560042048752194,
+    "timestamp": 1782590041.679334
+  },
+  {
+    "iteration": 34,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 13.515129691849442,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.943147832400303,
+      "downtime": 21.433987241402306,
+      "cost": 0.6948683007200138,
+      "blast_radius": 0.2,
+      "confidence": 0.884979044875115
+    },
+    "actual_twin": {
+      "mttr": 28.217223565450947,
+      "downtime": 20.682737727185536,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.725924266949356,
+    "policy_action": "approve",
+    "q_value": 0.7164838568287882,
+    "latencies_ms": {
+      "detection": 3.9497406359351395,
+      "rca": 3.6701931115876816,
+      "prediction": 3.873227658887151,
+      "recommendation": 2.012099521864224,
+      "twin": 8.21891338499691,
+      "decision": 3.36657100252504,
+      "remediation": 7.219976214896448
+    },
+    "cpu_load": 14.182340841328617,
+    "ram_mb": 56.09550243223592,
+    "timestamp": 1782590101.6793904
+  },
+  {
+    "iteration": 35,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 24.341058899550205,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.46824041729286,
+      "downtime": 21.06635881211984,
+      "cost": -0.9089610003037744,
+      "blast_radius": 0.2,
+      "confidence": 0.9291322900264167
+    },
+    "actual_twin": {
+      "mttr": 29.771679711085408,
+      "downtime": 22.611910755026237,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.30343929379254675,
+    "policy_action": "approve",
+    "q_value": 0.7256596639873488,
+    "latencies_ms": {
+      "detection": 2.784486996900846,
+      "rca": 4.159068098904559,
+      "prediction": 7.22482911498453,
+      "recommendation": 7.868798701724247,
+      "twin": 12.950268020022605,
+      "decision": 2.9652378859123423,
+      "remediation": 7.271136452501553
+    },
+    "cpu_load": 6.6189543860579745,
+    "ram_mb": 50.09080520176225,
+    "timestamp": 1782590161.6794422
+  },
+  {
+    "iteration": 36,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 26.75506570528922,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.06961806842622,
+      "downtime": 20.72250143689559,
+      "cost": 1.2650649560920466,
+      "blast_radius": 0.2,
+      "confidence": 0.9173197618804216
+    },
+    "actual_twin": {
+      "mttr": 31.059840097578544,
+      "downtime": 21.332650783430413,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.9902220291523243,
+    "policy_action": "approve",
+    "q_value": 0.7343766807879814,
+    "latencies_ms": {
+      "detection": 6.283786372628281,
+      "rca": 6.260442568602934,
+      "prediction": 7.212298858391181,
+      "recommendation": 3.4027841239954157,
+      "twin": 14.482332118876522,
+      "decision": 2.683654329286843,
+      "remediation": 4.5955830823706405
+    },
+    "cpu_load": 14.341463207493012,
+    "ram_mb": 52.77513808486896,
+    "timestamp": 1782590221.6794941
+  },
+  {
+    "iteration": 37,
+    "detected": false,
+    "rca_correct": false,
+    "predicted_rca": null,
+    "predicted_incident": true,
+    "lead_time": 11.608595243750907,
+    "rec_correct": false,
+    "playbook": null,
+    "predicted_twin": null,
+    "actual_twin": null,
+    "prediction_error": 0.0,
+    "policy_action": null,
+    "q_value": 0.7343766807879814,
+    "latencies_ms": {
+      "detection": 2.5248307417339833,
+      "rca": 2.75421221628637,
+      "prediction": 4.866204834752783,
+      "recommendation": 4.249975923965974,
+      "twin": 8.723182325287825,
+      "decision": 5.727889748673199,
+      "remediation": 5.070541220798577
+    },
+    "cpu_load": 11.188055532516051,
+    "ram_mb": 46.667810320215786,
+    "timestamp": 1782590281.679562
+  },
+  {
+    "iteration": 38,
+    "detected": false,
+    "rca_correct": false,
+    "predicted_rca": null,
+    "predicted_incident": false,
+    "lead_time": 0.0,
+    "rec_correct": false,
+    "playbook": null,
+    "predicted_twin": null,
+    "actual_twin": null,
+    "prediction_error": 0.0,
+    "policy_action": null,
+    "q_value": 0.7343766807879814,
+    "latencies_ms": {
+      "detection": 5.568243375694951,
+      "rca": 5.51428185903754,
+      "prediction": 3.343809542263647,
+      "recommendation": 5.828803313435946,
+      "twin": 13.428673708507947,
+      "decision": 6.471598735869939,
+      "remediation": 2.9280207270713694
+    },
+    "cpu_load": 13.429948459505935,
+    "ram_mb": 49.53138054927044,
+    "timestamp": 1782590341.6796157
+  },
+  {
+    "iteration": 39,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 30.004540544005632,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 32.01061298173223,
+      "downtime": 21.148755686874374,
+      "cost": -0.12377456111568633,
+      "blast_radius": 0.2,
+      "confidence": 0.8545059440874662
+    },
+    "actual_twin": {
+      "mttr": 31.175051066667002,
+      "downtime": 22.060328479507223,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.8355619150652274,
+    "policy_action": "approve",
+    "q_value": 0.7426578467485823,
+    "latencies_ms": {
+      "detection": 4.453227486002038,
+      "rca": 7.941849873567115,
+      "prediction": 3.980681803578382,
+      "recommendation": 6.176073846803154,
+      "twin": 13.344514632349272,
+      "decision": 3.242876251761031,
+      "remediation": 4.702590152131562
+    },
+    "cpu_load": 6.982347061283358,
+    "ram_mb": 51.02208230551898,
+    "timestamp": 1782590401.6796958
+  },
+  {
+    "iteration": 40,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 28.386504121855108,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 27.439702120161098,
+      "downtime": 19.585438022832182,
+      "cost": 0.43249998312510646,
+      "blast_radius": 0.2,
+      "confidence": 0.8644805117874437
+    },
+    "actual_twin": {
+      "mttr": 29.561936853695855,
+      "downtime": 17.684504258304152,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.122234733534757,
+    "policy_action": "approve",
+    "q_value": 0.7505249544111532,
+    "latencies_ms": {
+      "detection": 7.175975861634669,
+      "rca": 2.473691796702295,
+      "prediction": 2.6271709807398054,
+      "recommendation": 4.975764970012704,
+      "twin": 13.318301529871196,
+      "decision": 2.827374201390424,
+      "remediation": 5.623426158803907
+    },
+    "cpu_load": 9.080524610917575,
+    "ram_mb": 56.035260731785144,
+    "timestamp": 1782590461.6797497
+  },
+  {
+    "iteration": 41,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 25.4237288221182,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.326232038577174,
+      "downtime": 19.467349003809293,
+      "cost": -0.7642144919371572,
+      "blast_radius": 0.2,
+      "confidence": 0.9095816976350384
+    },
+    "actual_twin": {
+      "mttr": 31.40073119955849,
+      "downtime": 20.815604828196186,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.0744991609813148,
+    "policy_action": "approve",
+    "q_value": 0.7579987066905955,
+    "latencies_ms": {
+      "detection": 6.1673614859814885,
+      "rca": 4.394651236464585,
+      "prediction": 5.180346758310095,
+      "recommendation": 4.552354296276269,
+      "twin": 12.29588610814718,
+      "decision": 7.3299682098105094,
+      "remediation": 5.273031158697651
+    },
+    "cpu_load": 14.592767033584991,
+    "ram_mb": 56.637005972910096,
+    "timestamp": 1782590521.679803
+  },
+  {
+    "iteration": 42,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 20.235520555884015,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.74533272434141,
+      "downtime": 20.63777257330483,
+      "cost": 0.07222382083640937,
+      "blast_radius": 0.2,
+      "confidence": 0.9339771474985422
+    },
+    "actual_twin": {
+      "mttr": 32.27447435628203,
+      "downtime": 19.798114359735358,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.529141631940618,
+    "policy_action": "approve",
+    "q_value": 0.7650987713560657,
+    "latencies_ms": {
+      "detection": 4.494883286715718,
+      "rca": 3.8450072217563305,
+      "prediction": 4.126114102141475,
+      "recommendation": 6.461761323263292,
+      "twin": 10.312125114463406,
+      "decision": 5.282508285769811,
+      "remediation": 2.7355611039253027
+    },
+    "cpu_load": 9.254723962540659,
+    "ram_mb": 56.540872083425036,
+    "timestamp": 1782590581.679855
+  },
+  {
+    "iteration": 43,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 49.61171457430788,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.649750105379916,
+      "downtime": 20.286724236809103,
+      "cost": -0.46197952460956465,
+      "blast_radius": 0.2,
+      "confidence": 0.9025394950012344
+    },
+    "actual_twin": {
+      "mttr": 30.392525292972007,
+      "downtime": 19.590684307303448,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.25722481240790884,
+    "policy_action": "approve",
+    "q_value": 0.7718438327882624,
+    "latencies_ms": {
+      "detection": 2.471297318927661,
+      "rca": 7.859585642892374,
+      "prediction": 7.754862266635201,
+      "recommendation": 3.2429446446438677,
+      "twin": 10.161566572269233,
+      "decision": 2.2706382247739376,
+      "remediation": 3.4875205051606066
+    },
+    "cpu_load": 7.893155555529489,
+    "ram_mb": 56.891281231015924,
+    "timestamp": 1782590641.679923
+  },
+  {
+    "iteration": 44,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 26.575706178984717,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.592598107085234,
+      "downtime": 20.110430559871688,
+      "cost": 0.11179493196761141,
+      "blast_radius": 0.2,
+      "confidence": 0.8842224925495485
+    },
+    "actual_twin": {
+      "mttr": 29.72735350929762,
+      "downtime": 19.67253532337377,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 0.865244597787612,
+    "policy_action": "approve",
+    "q_value": 0.7782516411488493,
+    "latencies_ms": {
+      "detection": 4.054595206209875,
+      "rca": 4.2960212576387065,
+      "prediction": 7.7530630958485425,
+      "recommendation": 5.736763337744409,
+      "twin": 14.070604906722755,
+      "decision": 6.511696565626774,
+      "remediation": 3.2433101553069674
+    },
+    "cpu_load": 13.141028898324894,
+    "ram_mb": 56.48948604917909,
+    "timestamp": 1782590701.6800232
+  },
+  {
+    "iteration": 45,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 29.261489188747294,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.23557830057683,
+      "downtime": 20.036140995593588,
+      "cost": 0.7919893142490746,
+      "blast_radius": 0.2,
+      "confidence": 0.8801238754195586
+    },
+    "actual_twin": {
+      "mttr": 28.328352781838902,
+      "downtime": 20.040746490720185,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.9072255187379277,
+    "policy_action": "approve",
+    "q_value": 0.7843390590914068,
+    "latencies_ms": {
+      "detection": 2.286550087651092,
+      "rca": 2.510588161009129,
+      "prediction": 7.30268231029936,
+      "recommendation": 6.2332053595510155,
+      "twin": 11.884379579577153,
+      "decision": 3.4938585707069416,
+      "remediation": 2.291419869940871
+    },
+    "cpu_load": 8.976576774190402,
+    "ram_mb": 45.65500294632444,
+    "timestamp": 1782590761.6801133
+  },
+  {
+    "iteration": 46,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 39.80973211635285,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 31.431196014295054,
+      "downtime": 19.49153616845306,
+      "cost": 0.7500447661918521,
+      "blast_radius": 0.2,
+      "confidence": 0.8560586136521003
+    },
+    "actual_twin": {
+      "mttr": 26.989320831167657,
+      "downtime": 18.573643092588533,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 4.441875183127397,
+    "policy_action": "approve",
+    "q_value": 0.7901221061368364,
+    "latencies_ms": {
+      "detection": 5.667136251434638,
+      "rca": 3.2609374908380167,
+      "prediction": 7.1475397101194,
+      "recommendation": 3.6453618700717794,
+      "twin": 14.38226749587169,
+      "decision": 5.302193415922257,
+      "remediation": 7.798943257110673
+    },
+    "cpu_load": 8.144067920424717,
+    "ram_mb": 49.84170143301779,
+    "timestamp": 1782590821.6802053
+  },
+  {
+    "iteration": 47,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": false,
+    "lead_time": 0.0,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 30.505151406060456,
+      "downtime": 20.5160863051316,
+      "cost": 0.05891376149607543,
+      "blast_radius": 0.2,
+      "confidence": 0.8795855643885103
+    },
+    "actual_twin": {
+      "mttr": 28.222374556308573,
+      "downtime": 21.607756433374433,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.282776849751883,
+    "policy_action": "approve",
+    "q_value": 0.7956160008299946,
+    "latencies_ms": {
+      "detection": 7.68201618887629,
+      "rca": 7.355170504221417,
+      "prediction": 3.5071651894196783,
+      "recommendation": 7.517924369371806,
+      "twin": 9.055350553214762,
+      "decision": 6.491646249335615,
+      "remediation": 3.9698068664451847
+    },
+    "cpu_load": 7.6551618952614735,
+    "ram_mb": 49.58986147152279,
+    "timestamp": 1782590881.6802862
+  },
+  {
+    "iteration": 48,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 41.33403877114519,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 32.63546570099548,
+      "downtime": 21.200854017728034,
+      "cost": 0.3244550100041373,
+      "blast_radius": 0.2,
+      "confidence": 0.8500374793614199
+    },
+    "actual_twin": {
+      "mttr": 30.23585531911635,
+      "downtime": 22.382914688974918,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 2.399610381879132,
+    "policy_action": "approve",
+    "q_value": 0.8008352007884949,
+    "latencies_ms": {
+      "detection": 5.050849408498043,
+      "rca": 5.988820161980201,
+      "prediction": 6.131000394510394,
+      "recommendation": 3.6435987151254485,
+      "twin": 13.826249363121143,
+      "decision": 2.3749680500087136,
+      "remediation": 7.4860235540063975
+    },
+    "cpu_load": 6.206383984978655,
+    "ram_mb": 49.71149856603058,
+    "timestamp": 1782590941.680374
+  },
+  {
+    "iteration": 49,
+    "detected": true,
+    "rca_correct": true,
+    "predicted_rca": "order-service",
+    "predicted_incident": true,
+    "lead_time": 47.568427606640576,
+    "rec_correct": true,
+    "playbook": "rollback_release",
+    "predicted_twin": {
+      "mttr": 29.543573810309205,
+      "downtime": 19.758454073636134,
+      "cost": -0.3104576692545453,
+      "blast_radius": 0.2,
+      "confidence": 0.9073800042062268
+    },
+    "actual_twin": {
+      "mttr": 31.318144102346384,
+      "downtime": 21.110358796165364,
+      "cost": 0.0,
+      "blast_radius": 0.2
+    },
+    "prediction_error": 1.774570292037179,
+    "policy_action": "approve",
+    "q_value": 0.8057934407490701,
+    "latencies_ms": {
+      "detection": 7.3114012148756515,
+      "rca": 4.86014368062237,
+      "prediction": 5.290053139189258,
+      "recommendation": 3.253198455381896,
+      "twin": 13.572558119666791,
+      "decision": 2.4018980037829034,
+      "remediation": 7.589567090927861
+    },
+    "cpu_load": 8.858218939659992,
+    "ram_mb": 51.291357124581694,
+    "timestamp": 1782591001.6804628
+  }
+]

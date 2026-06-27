@@ -1,0 +1,203 @@
+{
+  "precision": {
+    "value": 100.0,
+    "ci": [
+      100.0,
+      100.0
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "recall": {
+    "value": 94.0,
+    "ci": [
+      87.4172005954913,
+      100.0
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "f1_score": {
+    "value": 96.90721649484536,
+    "ci": [
+      92.10851330090838,
+      100.0
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "prediction_accuracy": {
+    "value": 92.0,
+    "ci": [
+      84.48013617144566,
+      99.51986382855435
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "lead_time": {
+    "value": 33.681069891607095,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "rca_accuracy": {
+    "value": 100.0,
+    "ci": [
+      100.0,
+      100.0
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "recommendation_accuracy": {
+    "value": 93.61702127659575,
+    "ci": [
+      86.6283236598769,
+      100.0
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "graph_traversal_latency": {
+    "value": 4.962248618723041,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "graph_lookup_accuracy": {
+    "value": 94.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "copilot_retrieval_recall": {
+    "value": 94.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "copilot_groundedness": {
+    "value": 88.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "approvals_generated": {
+    "value": 47.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "approvals_accepted_rate": {
+    "value": 87.76595744680851,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "policy_compliance": {
+    "value": 100.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "approval_latency": {
+    "value": 0.46749751031329445,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "learning_reward_delta": {
+    "value": 0.7607934407490701,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "twin_simulation_mae": {
+    "value": 1.7050266027960421,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "twin_simulation_rmse": {
+    "value": 2.153583437286672,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "twin_calibration_error": {
+    "value": 3.9876448040091494,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "latency_p50": {
+    "value": 42.867055144033216,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "latency_p95": {
+    "value": 49.31034940211834,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "throughput_events": {
+    "value": 450.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "throughput_simulations": {
+    "value": 12.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "cpu_utilization": {
+    "value": 9.534113884292275,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "ram_utilization_mb": {
+    "value": 59.46110551343772,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "recovery_success_rate": {
+    "value": 88.0,
+    "ci": [
+      78.99252577022837,
+      97.00747422977163
+    ],
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "mttr": {
+    "value": 31.312140700777853,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "mtbf": {
+    "value": 199.93621600968356,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "availability": {
+    "value": 99.96810800484178,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  },
+  "cost_efficiency": {
+    "value": 85.0,
+    "ci": null,
+    "baseline_values": {},
+    "metadata": {}
+  }
+}

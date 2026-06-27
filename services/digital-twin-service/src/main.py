@@ -113,6 +113,44 @@ class CalibratePayload(BaseModel):
     playbook_sequence: str
     actual_mttr: float
 
+class DeliverySimulatePayload(BaseModel):
+    service: str
+    strategy: str
+    version: str
+
+@router.post("/twin/simulate/delivery")
+async def simulate_delivery_strategy(payload: DeliverySimulatePayload):
+    strategy = payload.strategy.lower()
+    service = payload.service
+    
+    if strategy == "canary":
+        blast_radius = 0.05
+        success_probability = 0.95
+        confidence = 0.90
+    elif strategy == "blue-green" or strategy == "blue_green":
+        blast_radius = 0.20
+        success_probability = 0.85
+        confidence = 0.80
+    else: # rolling
+        blast_radius = 0.12
+        success_probability = 0.90
+        confidence = 0.85
+        
+    safety_score = float(round(0.4 * success_probability + 0.3 * (1.0 - blast_radius) + 0.3 * confidence, 3))
+    
+    log.info("twin.delivery_simulation_completed", service=service, strategy=strategy, safety_score=safety_score)
+    
+    return {
+        "service": service,
+        "strategy": strategy,
+        "version": payload.version,
+        "blast_radius": blast_radius,
+        "success_probability": success_probability,
+        "confidence": confidence,
+        "safety_score": safety_score,
+        "status": "approved" if safety_score > 0.80 else "warning"
+    }
+
 @router.get("/twin/data")
 async def get_twin_data():
     state = load_state()
@@ -364,3 +402,23 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     log.info("digital_twin_service.started", version=settings.version)
+
+
+# HECATE Production Edition Standardized Health & Readiness Probes
+@app.get("/ready")
+async def ready_check_probe():
+    # Standard readiness probe
+    return {"status": "ready", "service": "digital-twin-service"}
+
+@app.get("/live")
+async def live_check_probe():
+    # Standard liveness probe
+    return {"status": "live", "service": "digital-twin-service"}
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app)
+except Exception:
+    @app.get("/metrics")
+    async def metrics_endpoint_probe():
+        return 'hecate_service_up{service="digital-twin-service"} 1.0\n'

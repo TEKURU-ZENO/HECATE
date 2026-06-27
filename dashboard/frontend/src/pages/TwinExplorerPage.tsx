@@ -128,7 +128,7 @@ export default function TwinExplorerPage() {
         { playbook_sequence: "scale_deployment", predicted_mttr: 15.0, predicted_cost: 10.0, predicted_blast_radius: 0.0, success_probability: 0.90, confidence: 0.88, score: 0.801 },
         { playbook_sequence: "restart_pod", predicted_mttr: 12.0, predicted_cost: 0.0, predicted_blast_radius: 0.1, success_probability: 0.75, confidence: 0.88, score: 0.768 },
         { playbook_sequence: "rollback_release", predicted_mttr: 18.0, predicted_cost: 0.0, predicted_blast_radius: 0.2, success_probability: 0.85, confidence: 0.88, score: 0.744 },
-        { playbook_sequence: "migrate_service", playbook_sequence: "migrate_service", predicted_mttr: 25.0, predicted_cost: 5.0, predicted_blast_radius: 0.4, success_probability: 0.60, confidence: 0.88, score: 0.523 }
+        { playbook_sequence: "migrate_service", predicted_mttr: 25.0, predicted_cost: 5.0, predicted_blast_radius: 0.4, success_probability: 0.60, confidence: 0.88, score: 0.523 }
       ];
       setSimulations(mockSims);
       setTwinConfidence(0.88);

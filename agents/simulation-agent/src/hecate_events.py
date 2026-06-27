@@ -78,6 +78,24 @@ class HecateEventBus:
         conn.close()
 
     def publish(self, topic: str, payload: dict):
+        # Tracing context propagation injection
+        if "trace_context" not in payload:
+            import uuid
+            payload["trace_context"] = {
+                "trace_id": os.environ.get("HECATE_ACTIVE_TRACE_ID") or uuid.uuid4().hex,
+                "span_id": uuid.uuid4().hex[:16],
+                "parent_span_id": os.environ.get("HECATE_ACTIVE_SPAN_ID") or ""
+            }
+        
+        # Cryptographic signing for decision payloads (Phase P5 Security)
+        if topic == "decision-topic":
+            import hmac
+            import hashlib
+            secret_key = os.environ.get("DECISION_SIGNING_KEY", "HECATE_SECRET_SIGNING_KEY_2026").encode()
+            payload_to_sign = {k: v for k, v in payload.items() if k not in ["signature", "trace_context"]}
+            serialized_payload = json.dumps(payload_to_sign, sort_keys=True).encode()
+            signature = hmac.new(secret_key, serialized_payload, hashlib.sha256).hexdigest()
+            payload["signature"] = signature
         global _kafka_disabled
         if self.use_kafka and not _kafka_disabled:
             try:
@@ -129,7 +147,13 @@ class HecateEventBus:
                 )
                 log.info("event_bus.kafka_subscriber_started", topics=topics, group_id=group_id)
                 for message in consumer:
-                    yield message.value
+                    evt = message.value
+                    if isinstance(evt, dict):
+                        trace_ctx = evt.get("trace_context")
+                        if trace_ctx:
+                            os.environ["HECATE_ACTIVE_TRACE_ID"] = trace_ctx.get("trace_id", "")
+                            os.environ["HECATE_ACTIVE_SPAN_ID"] = trace_ctx.get("span_id", "")
+                    yield evt
                 return
             except Exception as e:
                 _kafka_disabled = True
@@ -170,7 +194,13 @@ class HecateEventBus:
                 last_id = event_id
                 if topic in topics:
                     try:
-                        yield json.loads(payload)
+                        evt = json.loads(payload)
+                        if isinstance(evt, dict):
+                            trace_ctx = evt.get("trace_context")
+                            if trace_ctx:
+                                os.environ["HECATE_ACTIVE_TRACE_ID"] = trace_ctx.get("trace_id", "")
+                                os.environ["HECATE_ACTIVE_SPAN_ID"] = trace_ctx.get("span_id", "")
+                        yield evt
                     except Exception as e:
                         log.error("event_bus.sqlite_payload_parse_error", error=str(e))
 

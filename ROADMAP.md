@@ -33,3 +33,10 @@
 * Execution Validator (topology freshness & liveness protection gate)
 * Recommendation Agent Q-value optimization via Temporal Difference (TD) learning
 * React Twin Explorer Dashboard with Reality vs Prediction error metrics
+
+## Phase 11: Production-Grade Reliability & Controlled Evaluation Harness (v2.0.5)
+* Modular evaluation framework (`evaluation/`) separating context, metrics, and reports
+* Standardized metrics registry and chaos scenario failure injectors
+* Welch's t-test ($p < 0.05$), Cohen's d, and bootstrap significance verification
+* Interactive dashboard reports (`evaluation.html`) and LaTeX/SVG exports
+* CLI comparator tool for versioned results delta profiling

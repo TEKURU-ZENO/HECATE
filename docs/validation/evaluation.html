@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HECATE v2.0 Platform Evaluation Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #161d30;
+            --bg-tertiary: #1f2a45;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #2d3748;
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: 'Outfit', 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .card-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+        .card-value .ci {
+            font-size: 1rem;
+            color: var(--accent-purple);
+            font-weight: normal;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .chart-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            min-height: 350px;
+        }
+        .chart-title {
+            font-size: 1.2rem;
+            margin: 0 0 20px 0;
+            color: var(--text-main);
+            border-left: 4px solid var(--accent-blue);
+            padding-left: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .highlight {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+        .stats-badge {
+            display: inline-block;
+            background-color: var(--bg-tertiary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.95rem;
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HECATE Operational & Accuracy Dashboard</h1>
+            <div class="subtitle">Platform Reliability, Intelligence, & Performance Diagnostics</div>
+        </header>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Infrastructure Availability</div>
+                <div class="card-value" style="color: var(--accent-green)">99.968%</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Mean Time To Resolution (MTTR)</div>
+                <div class="card-value">31.31s</div>
+            </div>
+            <div class="card">
+                <div class="card-title">RCA Localization Accuracy</div>
+                <div class="card-value" style="color: var(--accent-blue)">100.0%</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Twin Simulation MAE</div>
+                <div class="card-value">1.71s</div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <!-- MTTR Baselines Bar Chart -->
+            <div class="chart-card">
+                <div class="chart-title">MTTR Comparison Against Control Baselines</div>
+                <svg width="100%" height="320" viewBox="0 0 650 320" style="background-color: var(--bg-primary); border-radius: 8px;">
+                    
+            <text x="10" y="55" fill="#9ca3af" font-size="12">Baseline 0 (No Remediation)</text>
+            <rect x="220" y="40" width="400" height="20" rx="3" fill="#3b82f6"></rect>
+            <text x="630" y="55" fill="#f3f4f6" font-size="12" font-weight="bold">300.3s</text>
+            
+            <text x="10" y="95" fill="#9ca3af" font-size="12">Baseline 1 (Threshold Rules)</text>
+            <rect x="220" y="80" width="61" height="20" rx="3" fill="#3b82f6"></rect>
+            <text x="291" y="95" fill="#f3f4f6" font-size="12" font-weight="bold">45.9s</text>
+            
+            <text x="10" y="135" fill="#9ca3af" font-size="12">Baseline 2 (Random Playbook)</text>
+            <rect x="220" y="120" width="73" height="20" rx="3" fill="#3b82f6"></rect>
+            <text x="303" y="135" fill="#f3f4f6" font-size="12" font-weight="bold">55.1s</text>
+            
+            <text x="10" y="175" fill="#9ca3af" font-size="12">Baseline 3 (Historical Recs)</text>
+            <rect x="220" y="160" width="28" height="20" rx="3" fill="#3b82f6"></rect>
+            <text x="258" y="175" fill="#f3f4f6" font-size="12" font-weight="bold">21.1s</text>
+            
+            <text x="10" y="215" fill="#9ca3af" font-size="12">Baseline 4 (Prediction Only)</text>
+            <rect x="220" y="200" width="26" height="20" rx="3" fill="#3b82f6"></rect>
+            <text x="256" y="215" fill="#f3f4f6" font-size="12" font-weight="bold">19.6s</text>
+            
+            <text x="10" y="255" fill="#9ca3af" font-size="12">Baseline 5 (Pred + Rec)</text>
+            <rect x="220" y="240" width="19" height="20" rx="3" fill="#3b82f6"></rect>
+            <text x="249" y="255" fill="#f3f4f6" font-size="12" font-weight="bold">14.3s</text>
+            
+            <text x="10" y="295" fill="#9ca3af" font-size="12">Baseline 6 (Full HECATE)</text>
+            <rect x="220" y="280" width="16" height="20" rx="3" fill="#10b981"></rect>
+            <text x="246" y="295" fill="#f3f4f6" font-size="12" font-weight="bold">12.4s</text>
+            
+                </svg>
+            </div>
+
+            <!-- Q-Value Learning Convergence -->
+            <div class="chart-card">
+                <div class="chart-title">Adaptive Engine Reward Convergence (Q-Value)</div>
+                <svg width="100%" height="320" viewBox="0 0 500 220" style="background-color: var(--bg-primary); border-radius: 8px;">
+                    <!-- Axis lines -->
+                    <line x1="50" y1="170" x2="450" y2="170" stroke="#4b5563" stroke-width="1.5"></line>
+                    <line x1="50" y1="50" x2="50" y2="170" stroke="#4b5563" stroke-width="1.5"></line>
+                    <!-- Y Axis Labels -->
+                    <text x="15" y="55" fill="#9ca3af" font-size="10">0.9 (Max)</text>
+                    <text x="15" y="175" fill="#9ca3af" font-size="10">0.0 (Init)</text>
+                    <!-- Graph Path -->
+                    <path d="M 50 170 L 50 170 L 83 152 L 116 137 L 150 122 L 183 108 L 216 97 L 250 86 L 283 78 L 316 72 L 350 67 L 383 65 L 416 64 L 450 62" fill="none" stroke="var(--accent-purple)" stroke-width="3"></path>
+                    <circle cx="50" cy="170" r="4" fill="#8b5cf6"></circle><circle cx="83" cy="152" r="4" fill="#8b5cf6"></circle><circle cx="116" cy="137" r="4" fill="#8b5cf6"></circle><circle cx="150" cy="122" r="4" fill="#8b5cf6"></circle><circle cx="183" cy="108" r="4" fill="#8b5cf6"></circle><circle cx="216" cy="97" r="4" fill="#8b5cf6"></circle><circle cx="250" cy="86" r="4" fill="#8b5cf6"></circle><circle cx="283" cy="78" r="4" fill="#8b5cf6"></circle><circle cx="316" cy="72" r="4" fill="#8b5cf6"></circle><circle cx="350" cy="67" r="4" fill="#8b5cf6"></circle><circle cx="383" cy="65" r="4" fill="#8b5cf6"></circle><circle cx="416" cy="64" r="4" fill="#8b5cf6"></circle><circle cx="450" cy="62" r="4" fill="#8b5cf6"></circle>
+                </svg>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Ablation Card Table -->
+            <div class="chart-card" style="grid-column: span 2;">
+                <div class="chart-title">Ablation Studies Analysis Matrix</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Disabled Component</th>
+                            <th>Mean MTTR</th>
+                            <th>Detection Precision</th>
+                            <th>Availability Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        
+                        <tr class='highlight'>
+                            <td>Full HECATE Pipeline</td>
+                            <td>11.65s</td>
+                            <td>95.28%</td>
+                            <td>99.6375%</td>
+                        </tr>
+            
+                        <tr >
+                            <td>Without Prediction</td>
+                            <td>15.47s</td>
+                            <td>91.02%</td>
+                            <td>99.3349%</td>
+                        </tr>
+            
+                        <tr >
+                            <td>Without Twin</td>
+                            <td>18.56s</td>
+                            <td>95.64%</td>
+                            <td>99.1992%</td>
+                        </tr>
+            
+                        <tr >
+                            <td>Without Learning</td>
+                            <td>13.07s</td>
+                            <td>96.24%</td>
+                            <td>99.5389%</td>
+                        </tr>
+            
+                        <tr >
+                            <td>Without Graph</td>
+                            <td>16.03s</td>
+                            <td>83.06%</td>
+                            <td>99.3234%</td>
+                        </tr>
+            
+                        <tr >
+                            <td>Without Copilot</td>
+                            <td>11.57s</td>
+                            <td>95.98%</td>
+                            <td>99.5521%</td>
+                        </tr>
+            
+                        <tr >
+                            <td>Without HITL Governance</td>
+                            <td>11.44s</td>
+                            <td>95.78%</td>
+                            <td>99.0908%</td>
+                        </tr>
+            
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="chart-title">Hypothesis Tests & Statistical Significance Metrics</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div>
+                    <strong>Welch's t-test statistic:</strong>
+                    <div class="stats-badge" style="margin-top: 5px;">52.7904</div>
+                </div>
+                <div>
+                    <strong>Welch's t-test p-value:</strong>
+                    <div class="stats-badge" style="margin-top: 5px;">0.0000e+00</div>
+                </div>
+                <div>
+                    <strong>Cohen's d Effect Size:</strong>
+                    <div class="stats-badge" style="margin-top: 5px; color: var(--accent-green)">10.8898</div>
+                </div>
+                <div>
+                    <strong>Bootstrap 95% CI (HECATE MTTR):</strong>
+                    <div class="stats-badge" style="margin-top: 5px;">29.77s - 30.68s</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

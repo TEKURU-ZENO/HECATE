@@ -51,3 +51,23 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("src.main:app", host=settings.host, port=settings.port, reload=True)
+
+
+# HECATE Production Edition Standardized Health & Readiness Probes
+@app.get("/ready")
+async def ready_check_probe():
+    # Standard readiness probe
+    return {"status": "ready", "service": "copilot-service"}
+
+@app.get("/live")
+async def live_check_probe():
+    # Standard liveness probe
+    return {"status": "live", "service": "copilot-service"}
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app)
+except Exception:
+    @app.get("/metrics")
+    async def metrics_endpoint_probe():
+        return 'hecate_service_up{service="copilot-service"} 1.0\n'

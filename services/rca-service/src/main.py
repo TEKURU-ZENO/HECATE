@@ -36,3 +36,15 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     log.info("rca-service.started")
+
+
+# HECATE Production Edition Standardized Health & Readiness Probes
+@app.get("/ready")
+async def ready_check_probe():
+    # Standard readiness probe
+    return {"status": "ready", "service": "rca-service"}
+
+@app.get("/live")
+async def live_check_probe():
+    # Standard liveness probe
+    return {"status": "live", "service": "rca-service"}

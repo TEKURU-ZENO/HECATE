@@ -1,0 +1,29 @@
+runs: 200
+seed: 1337
+parallel_workers: 4
+noise:
+  gaussian: 0.10
+failure_probability: 0.05
+chaos:
+  enabled: true
+  pod_crash: 0.20
+  dns_failure: 0.15
+  kafka_outage: 0.10
+  memory_leak: 0.20
+  api_timeout: 0.15
+  packet_loss: 0.10
+  clock_skew: 0.10
+twin:
+  enabled: true
+learning:
+  enabled: true
+graph:
+  enabled: true
+copilot:
+  enabled: true
+governance:
+  enabled: true
+ablation:
+  enabled: true
+baseline:
+  enabled: true

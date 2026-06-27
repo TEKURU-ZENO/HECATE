@@ -128,6 +128,31 @@ def get_db_connection():
         conn.commit()
     except Exception:
         pass
+    try:
+        cursor.execute("ALTER TABLE incidents ADD COLUMN tenant_id TEXT DEFAULT 'default'")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE policies ADD COLUMN tenant_id TEXT DEFAULT 'default'")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE operational_memory ADD COLUMN tenant_id TEXT DEFAULT 'default'")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE approvals ADD COLUMN tenant_id TEXT DEFAULT 'default'")
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN tenant_id TEXT DEFAULT 'default'")
+        conn.commit()
+    except Exception:
+        pass
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS remediations (
@@ -232,6 +257,23 @@ def get_db_connection():
             action_name TEXT,
             q_value REAL DEFAULT 0.0,
             PRIMARY KEY (state_key, action_name)
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sre_metrics (
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            mttr_seconds REAL,
+            mtbf_hours REAL,
+            availability_pct REAL,
+            error_budget_remaining_pct REAL,
+            slo_compliance_pct REAL,
+            sla_compliance_pct REAL,
+            incident_frequency INTEGER,
+            recovery_success_rate REAL,
+            prediction_accuracy REAL,
+            false_positive_rate REAL,
+            simulation_accuracy REAL,
+            recommendation_accuracy REAL
         )
     """)
 

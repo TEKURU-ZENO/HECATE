@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.5] - 2026-06-28
+
+### Added
+- **HECATE v2.0.5 — Research Evaluation Harness**
+  - Modular evaluation package (`evaluation/`) separating core context, metrics, registry, generators, and reports.
+  - Failure scenario registry mapping CPU spikes, memory leaks, DNS failures, packet loss, pod crashes, Kafka outages, and API timeouts.
+  - Interactive HTML evaluation dashboard with styled inline SVGs, Markdown executive reports, and vector SVG paper figures.
+  - Welch's t-test, Mann-Whitney U, Cohen's d effect size, and bootstrap confidence intervals.
+  - Git-style performance delta diff comparison CLI tool.
+
+## [2.0.0] - 2026-06-27
+
 ### Added
 - **HECATE v2.0 — Autonomous Infrastructure Simulation & Planning** (Major Upgrade)
   - Standalone `digital-twin-service` (port 8006) for multi-cloud, multi-cluster sequence simulations, custom confidence metrics, and post-execution reality calibration loop.

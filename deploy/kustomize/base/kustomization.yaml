@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../infrastructure/kubernetes/namespaces/hecate-system.yaml
+  - ../../../infrastructure/kubernetes/namespaces/hecate-agents.yaml
+  - ../../../infrastructure/kubernetes/rbac/cluster-roles.yaml
+  - ../../../infrastructure/kubernetes/rbac/role-bindings.yaml
+  - ../../../infrastructure/kubernetes/deployments/anomaly-service.yaml
+  - ../../../infrastructure/kubernetes/deployments/dashboard-api.yaml
+  - ../../../infrastructure/kubernetes/deployments/decision-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/detection-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/learning-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/monitoring-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/policy-service.yaml
+  - ../../../infrastructure/kubernetes/deployments/rca-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/rca-service.yaml
+  - ../../../infrastructure/kubernetes/deployments/remediation-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/remediation-service.yaml
+  - ../../../infrastructure/kubernetes/deployments/reporting-agent.yaml
+  - ../../../infrastructure/kubernetes/deployments/telemetry-service.yaml

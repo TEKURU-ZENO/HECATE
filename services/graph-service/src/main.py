@@ -60,3 +60,28 @@ async def root():
         "mode": mode,
         "archive_days": settings.archive_days
     }
+
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
+
+# HECATE Production Edition Standardized Health & Readiness Probes
+@app.get("/ready")
+async def ready_check_probe():
+    # Standard readiness probe
+    return {"status": "ready", "service": "graph-service"}
+
+@app.get("/live")
+async def live_check_probe():
+    # Standard liveness probe
+    return {"status": "live", "service": "graph-service"}
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app)
+except Exception:
+    @app.get("/metrics")
+    async def metrics_endpoint_probe():
+        return 'hecate_service_up{service="graph-service"} 1.0\n'
